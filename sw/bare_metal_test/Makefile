@@ -38,6 +38,7 @@ APP_OBJS = $(OBJ_DIR)/startup.o \
            $(OBJ_DIR)/console.o \
            $(OBJ_DIR)/led.o     \
            $(OBJ_DIR)/pwm.o     \
+           $(OBJ_DIR)/adc.o     \
            $(OBJ_DIR)/main.o
 
 # ----- Compiler flags

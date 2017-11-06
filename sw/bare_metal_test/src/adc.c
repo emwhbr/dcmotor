@@ -9,15 +9,15 @@
  *                                                                      *
  ************************************************************************/
 
-#include "pwm.h"
+#include "adc.h"
 #include "sam9l9260.h"
 
 /****************************************************************************
  *               Global variables
  ****************************************************************************/
 static volatile AT91S_PMC *g_pmc  = (AT91S_PMC *) AT91C_BASE_PMC;
-static volatile AT91S_PIO *g_piob = (AT91S_PIO *) AT91C_BASE_PIOB;
-static volatile AT91S_TC  *g_tc3  = (AT91S_TC *) AT91C_BASE_TC3;
+static volatile AT91S_PIO *g_pioc = (AT91S_PIO *) AT91C_BASE_PIOC;
+static volatile AT91S_ADC *g_adc  = (AT91S_ADC *) AT91C_BASE_ADC;
 
 /****************************************************************************
  *               Function prototypes
@@ -29,45 +29,47 @@ static volatile AT91S_TC  *g_tc3  = (AT91S_TC *) AT91C_BASE_TC3;
 
 /*****************************************************************/
 
-void pwm_initialize(void)
+void adc_initialize(void)
 {
-  g_pmc->PMC_PCER = 1 << AT91C_ID_TC3;  /* enable peripheral clock for timer/counter 3 */
+  g_pmc->PMC_PCER = 1 << AT91C_ID_ADC;  /* enable peripheral clock for ADC */
 
-  g_piob->PIO_PDR = AT91C_PB0_TIOA3; /* enable peripheral control of TIOA3 (PB0)*/
-  g_piob->PIO_BSR = AT91C_PB0_TIOA3; /* peripheral B selection*/
+  g_pioc->PIO_PDR = AT91C_PC0_AD0; /* enable peripheral control of AD0 (PC0)*/
+  g_pioc->PIO_ASR = AT91C_PC0_AD0; /* peripheral A selection*/
 
-  g_tc3->TC_CCR = AT91C_TC_CLKDIS; /* disable counter clock */
+  /* assumes MCK=100MHz (T=10ns)
+   * select ADC frequency = 2.5MHz (max 5MHz according to datasheet)
+   * Tadc = 0.4us
+   *
+   * ADCClock = MCK / ((PRESCAL+1) * 2) ==> PRESCAL=19
+   *
+   * Startup time = (STARTUP+1) * 8 * Tadc
+   * Startup time = 16us ==> STARTUP=4
+   *
+   * Sample&Hold = (SHTIM+1) * Tadc
+   * Sample&Hold = 10xTadc = 4us ==> SHTIM=9
+   */
+  g_adc->ADC_MR = (19 <<  8)                  | /* PRESCAL=19             */
+                  ( 4 << 16)                  | /* STARTUP=4              */
+                  ( 9 << 24)                  | /* SHTIM=9                */
+                  AT91C_ADC_LOWRES_10_BIT     | /* 10-bit resolution      */
+                  AT91C_ADC_SLEEP_NORMAL_MODE | /* normal mode            */
+                  AT91C_ADC_TRGEN_DIS         ; /* conversion start by sw */
 
-  g_tc3->TC_CMR = AT91C_TC_ASWTRG_SET      |      /* software trigger sets TIOA      */
-                  AT91C_TC_ACPC_TOGGLE     |      /* RC compare toggle TIOA          */
-                  AT91C_TC_ACPA_TOGGLE     |      /* RA compare toggle TIOA          */
-                  AT91C_TC_WAVE            |      /* waveform mode                   */
-                  AT91C_TC_WAVESEL_UP_AUTO |      /* automatic trigger on RC compare */
-                  AT91C_TC_CLKS_TIMER_DIV1_CLOCK; /* TIMER_CLOCK1 = MCK/2            */
-  
-  /* assumes MCK=100MHz, clock selected = MCK/2=50MHz (T=20ns) */
-  g_tc3->TC_RA = 0x0000; /* 0 % duty */
-  g_tc3->TC_RC = 0xffff; /* 65535 (T=20ns x 65535 = 1.3107ms, F=763Hz PWM frequency) */
-
-  g_tc3->TC_CCR = AT91C_TC_CLKEN; /* enable counter clock          */
+  g_adc->ADC_CHER = AT91C_ADC_CH0; /* enable ADC channel 0 (AD0) */
 }
 
 /*****************************************************************/
 
-void pwm_set_duty(uint16_t duty_ctrl)
+uint16_t adc_convert(void)
 {
-  /* don't allow duty control value 0x0000 or 0xffff,
-   * this will generate 50% duty */
-  if (duty_ctrl == 0) {
-    duty_ctrl = 0x0001;
-  }
-  if (duty_ctrl == 0xffff) {
-    duty_ctrl = 0xfffe;
-  }
+  /* start conversion */
+  g_adc->ADC_CR = AT91C_ADC_START;
 
-  /* apply new duty control */
-  g_tc3->TC_RA = duty_ctrl;
-  g_tc3->TC_CCR = AT91C_TC_SWTRG; /* reset and start counter clock */
+  /* wait for conversion to complete (AD0) */
+  while ( !(g_adc->ADC_SR & AT91C_ADC_EOC0) ) {;}
+
+  /* read conversion result (AD0) */
+  return (uint16_t) (g_adc->ADC_CDR0 & 0x3ff);
 }
 
 /****************************************************************************
@@ -75,3 +77,4 @@ void pwm_set_duty(uint16_t duty_ctrl)
  ****************************************************************************/
 
 /*****************************************************************/
+
