@@ -15,6 +15,7 @@
 #include "led.h"
 #include "pwm.h"
 #include "adc.h"
+#include "encoder.h"
 #include "sam9l9260.h"
 
 /****************************************************************************
@@ -52,8 +53,9 @@ static void uint16_2_hexstr(char *str,
 
 void c_entry()  /* main() */
 {
-  uint16_t adc_val;
+  uint16_t adc_val;  
   uint16_t pwm_duty_ctrl;
+  uint16_t encoder_val;
 
   char hexstr[10];
 
@@ -62,6 +64,7 @@ void c_entry()  /* main() */
   led_initialize();
   pwm_initialize();
   adc_initialize();
+  encoder_initialize();
 
   console_putln("\nBare metal PWM alive!");
 
@@ -71,26 +74,34 @@ void c_entry()  /* main() */
   /* toggle green and yellow led
    * during ADC and PWM test */
   while (1) {
+    console_putln("----------");
+
+    /* read encoder */
+    encoder_val = encoder_get_value();
+    uint16_2_hexstr(hexstr, encoder_val);
+    console_put("  enc :");
+    console_putln(hexstr);
+
+    /* read ADC */
     adc_val = adc_convert();
     uint16_2_hexstr(hexstr, adc_val);
-    console_put("adc :");
+    console_put("  adc :");
     console_putln(hexstr);
     
+    /* set new PWM duty control */
     pwm_duty_ctrl = adc_val * ADC2DUTY_FACTOR;
-    uint16_2_hexstr(hexstr, pwm_duty_ctrl);
-    console_put("duty:");
-    console_putln(hexstr);
-
     pwm_set_duty(pwm_duty_ctrl);
+    uint16_2_hexstr(hexstr, pwm_duty_ctrl);
+    console_put("  duty:");
+    console_putln(hexstr);    
 
+    /* toggle LEDs */
     led_on(SAM9L9260_STAT_LED);
     led_off(SAM9L9260_PWR_LED);
-
     delay();
-
     led_off(SAM9L9260_STAT_LED);
     led_on(SAM9L9260_PWR_LED);
-    delay();
+    delay();    
   }
 }
 
