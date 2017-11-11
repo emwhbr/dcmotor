@@ -46,5 +46,6 @@ resume 0x200000
 # Load bare metal test application image to SDRAM
 echo ">>>> Start bare metal test application"
 #load_image ../sw/bare_metal_test/obj/bmt.bin 0x22200000 bin
+#load_image ../sw/bare_metal_test_irq/obj/bmti.bin 0x22200000 bin
 #resume 0x22200000
 
