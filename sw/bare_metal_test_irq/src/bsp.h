@@ -9,21 +9,31 @@
  *                                                                      *
  ************************************************************************/
 
-#ifndef __SAM9L9260_H__
-#define __SAM9L9260_H__
+#ifndef __BSP_H__
+#define __BSP_H__
 
-#include <stdint.h>
-
-#include "at91sam9260.h"
+#include "sam9l9260.h"
 
 /****************************************************************************
- *               SAM9-L9260 Development Board (Olimex)
+ *               BSP definitions
  ****************************************************************************/
+/* master clock [Hz]*/
+#define BSP_MCK  (204800000 / 2)   /* 102.400 MHz, configured in at91bootstrap */
 
-#define BIT(X)  (1 << (X))
+/* system clock tick rate [Hz] */
+#define BSP_TICKS_PER_SEC  (100)
 
-/* LED definitions */
-#define SAM9L9260_STAT_LED  BIT(6) /* pin controlled by PA6 (green)  */
-#define SAM9L9260_PWR_LED   BIT(9) /* pin controlled by PA9 (yellow) */
+/* internal SRAM, first bank, addr:0x0020_0000 */
+#define SRAM_ADDR  (AT91C_IRAM_1)
 
-#endif /* __SAM9L9260_H__ */
+/* IRQ priorities */
+#define ISR_PIT_PRIO  (AT91C_AIC_PRIOR_LOWEST + 0)
+
+/****************************************************************************
+ *               BSP functions
+ ****************************************************************************/
+void bsp_high_level_init(void);
+
+uint32_t bsp_get_pit_cnt(void);
+
+#endif /* __BSP_H__ */

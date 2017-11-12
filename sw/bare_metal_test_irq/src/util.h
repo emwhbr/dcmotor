@@ -9,11 +9,18 @@
  *                                                                      *
  ************************************************************************/
 
-#ifndef __IRQ_H__
-#define __IRQ_H__
+#ifndef __UTIL_H__
+#define __UTIL_H__
 
-void irq_initialize(void);
+#include <stdint.h>
 
-uint16_t irq_get_pit_cnt(void);
+void u8_hexstr(char *str,
+	       uint8_t val);
 
-#endif /* __IRQ_H__ */
+void u16_hexstr(char *str,
+		uint16_t val);
+
+void u32_hexstr(char *str,
+		uint32_t val);
+
+#endif /* __UTIL_H__ */

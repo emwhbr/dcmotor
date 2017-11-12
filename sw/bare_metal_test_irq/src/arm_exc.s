@@ -86,7 +86,7 @@ ARM_irq:
     /*	NOTE: Modified by EMWHBR
      * LDR     r12,=BSP_irq
      */
-    LDR     r12,=irq_isr_bsp_irq
+    LDR     r12,=bsp_isr_irq
 
     MOV     lr,pc               /* copy the return address to link register */
     BX      r12                 /* call the C IRQ-handler (ARM/THUMB) */
@@ -141,7 +141,7 @@ ARM_fiq:
     /*	NOTE: Modified by EMWHBR
      * LDR     r12,=BSP_fiq
      */
-    LDR     r12,=irq_isr_bsp_fiq
+    LDR     r12,=bsp_isr_fiq
 	
     MOV     lr,pc               /* store the return address */
     BX      r12                 /* call the C FIQ-handler (ARM/THUMB)
@@ -243,7 +243,7 @@ ARM_except:
     /*	NOTE: Modified by EMWHBR
      * LDR     r12,=BSP_abort
      */
-    LDR     r12,=irq_isr_bsp_abort	
+    LDR     r12,=bsp_isr_abort	
 
     MOV     lr,pc               /* store the return address */
     BX      r12                 /* call the assertion-handler (ARM/THUMB) */

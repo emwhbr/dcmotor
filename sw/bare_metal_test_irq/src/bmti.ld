@@ -11,14 +11,27 @@
 
 /*
  * Bare Metal Test Irq (bmti) linker script.
- * https://balau82.wordpress.com/2010/02/28/hello-world-for-bare-metal-arm-using-qemu/
+ *  - https://balau82.wordpress.com/2010/02/28/hello-world-for-bare-metal-arm-using-qemu
+ *
+ *  - Building Bare-Metal ARM Systems with GNU
+ *    http://www.state-machine.com
  */	
 
 ENTRY(_reset)
 
-SDRAM_APP_START_ADDR = 0x22200000; /* load image here  */
-C_STACK_SIZE         = 0x1000;     /* 4KB stack memory */
-C_HEAP_SIZE          = 0;          /* no heap          */
+/* load image here, SDRAM  */
+SDRAM_APP_START_ADDR = 0x22200000;
+
+/* stack memory sizes */
+C_STACK_SIZE   = 0x1000; /* 4KB stack */
+IRQ_STACK_SIZE = 0x1000; /* 4KB stack */
+FIQ_STACK_SIZE = 0x1000; /* 4KB stack */
+SVC_STACK_SIZE = 0x1000; /* 4KB stack */
+ABT_STACK_SIZE = 0x1000; /* 4KB stack */
+UND_STACK_SIZE = 0x1000; /* 4KB stack */
+
+/* heap memory size */
+C_HEAP_SIZE = 0; /* no heap */
 
 SECTIONS
 {
@@ -38,9 +51,17 @@ SECTIONS
     .text : { *(.text) }
  
     .data : { *(.data) }
- 
-    .bss : { *(.bss) }
 
+    .bss : {
+        __bss_start__ = . ;
+        *(.bss)
+        *(.bss*)
+        *(COMMON)
+        . = ALIGN(4);
+        __bss_end__ = .;
+    }
+
+    /* heap */
     .heap : {
         __heap_start__ = . ;
         . = . + C_HEAP_SIZE;
@@ -48,10 +69,34 @@ SECTIONS
         __heap_end__ = . ;
     }
 
+    /* stack */
     .stack : {
         __stack_start__ = . ;
-        . = . + C_STACK_SIZE;
-        . = ALIGN(4);
+
+	. += IRQ_STACK_SIZE;
+        . = ALIGN (4);
+        __irq_stack_top__ = . ;
+
+        . += FIQ_STACK_SIZE;
+        . = ALIGN (4);
+        __fiq_stack_top__ = . ;
+
+        . += SVC_STACK_SIZE;
+        . = ALIGN (4);
+        __svc_stack_top__ = . ;
+
+        . += ABT_STACK_SIZE;
+        . = ALIGN (4);
+        __abt_stack_top__ = . ;
+
+        . += UND_STACK_SIZE;
+        . = ALIGN (4);
+        __und_stack_top__ = . ;
+
+        . += C_STACK_SIZE;
+        . = ALIGN (4);
+        __c_stack_top__ = . ;
+
         __stack_end__ = . ;
     }
 }
