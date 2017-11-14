@@ -14,6 +14,7 @@
 #include "arm_exc.h"
 #include "console.h"
 #include "led.h"
+#include "encoder.h"
 
 /****************************************************************************
  *               Global variables
@@ -95,6 +96,7 @@ void bsp_high_level_init(void)
   /* initialize hardware */
   console_initialize();
   led_initialize();
+  encoder_initialize();
 
   console_putln("\nBSP init HW done");
 
@@ -106,7 +108,7 @@ void bsp_high_level_init(void)
 
 /*****************************************************************/
 
-uint32_t bsp_get_pit_cnt(void)
+uint32_t bsp_get_pit_counter(void)
 {
   uint32_t pit_cnt;
   ARM_INT_KEY_TYPE int_lock_key;  
@@ -211,11 +213,20 @@ static void bsp_irq_initialize(void)
   AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_SYS);
   AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_SYS);
 
+  /* configure IRQ1 interrupt (encoder output A) */
+  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_IRQ1] = (AT91_REG) encoder_isr_output_a;
+  AT91C_BASE_AIC->AIC_SMR[AT91C_ID_IRQ1] =
+    (AT91C_AIC_SRCTYPE_EXT_POSITIVE_EDGE | ISR_IRQ1_PRIO);
+  AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_IRQ1);
+  AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_IRQ1);
+
   /* unlock IRQ/FIQ at the ARM core level */
   ARM_INT_UNLOCK(0x1F);
 }
 
 /*****************************************************************/
+
+__attribute__ ((section (".text.fastcode")))
 
 static void bsp_isr_spur(void)
 {
@@ -226,6 +237,8 @@ static void bsp_isr_spur(void)
 }
 
 /*****************************************************************/
+
+__attribute__ ((section (".text.fastcode")))
 
 static void bsp_isr_pit(void)
 {

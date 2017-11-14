@@ -12,6 +12,7 @@
 #include "bsp.h"
 #include "console.h"
 #include "led.h"
+#include "encoder.h"
 #include "util.h"
 
 /****************************************************************************
@@ -38,6 +39,12 @@ void c_main()  /* main() */
   uint32_t mem_val;
 
   uint32_t pit_counter;
+  uint32_t pit_counter_old = 0;
+  uint32_t pit_counter_delta;
+
+  int encoder_counter;
+  int encoder_counter_old = 0;
+  int encoder_counter_delta;
 
   char hexstr[20];
 
@@ -71,14 +78,29 @@ void c_main()  /* main() */
   while (1) {
     console_putln("----------");
 
+    /* update local counter */
     u16_hexstr(hexstr, counter++);
-    console_put("  cnt :");
-    console_putln(hexstr);
+    console_put("  cnt :"); console_putln(hexstr);
 
-    pit_counter = bsp_get_pit_cnt();
+    /* get BSP PIT counter */
+    pit_counter = bsp_get_pit_counter();
+    pit_counter_delta = pit_counter - pit_counter_old;
+    pit_counter_old = pit_counter;
+
     u32_hexstr(hexstr, pit_counter);
-    console_put("  pit :");
-    console_putln(hexstr);
+    console_put("  pit :"); console_put(hexstr);
+    u32_hexstr(hexstr, pit_counter_delta);
+    console_put("  diff:"); console_putln(hexstr);
+
+    /* get encoder counter */
+    encoder_counter = encoder_get_counter();
+    encoder_counter_delta = encoder_counter - encoder_counter_old;
+    encoder_counter_old = encoder_counter;
+
+    u32_hexstr(hexstr, encoder_counter);
+    console_put("  enc :"); console_put(hexstr);
+    u32_hexstr(hexstr, encoder_counter_delta);
+    console_put("  diff:"); console_putln(hexstr);
 
     /* toggle LEDs */
     led_on(SAM9L9260_STAT_LED);

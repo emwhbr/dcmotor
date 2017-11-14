@@ -27,13 +27,14 @@
 #define SRAM_ADDR  (AT91C_IRAM_1)
 
 /* IRQ priorities */
-#define ISR_PIT_PRIO  (AT91C_AIC_PRIOR_LOWEST + 0)
+#define ISR_PIT_PRIO   (AT91C_AIC_PRIOR_LOWEST + 0)
+#define ISR_IRQ1_PRIO  (AT91C_AIC_PRIOR_LOWEST + 1)
 
 /****************************************************************************
  *               BSP functions
  ****************************************************************************/
 void bsp_high_level_init(void);
 
-uint32_t bsp_get_pit_cnt(void);
+uint32_t bsp_get_pit_counter(void);
 
 #endif /* __BSP_H__ */
