@@ -27,8 +27,9 @@
 #define SRAM_ADDR  (AT91C_IRAM_1)
 
 /* IRQ priorities */
-#define ISR_PIT_PRIO   (AT91C_AIC_PRIOR_LOWEST + 0)
-#define ISR_IRQ1_PRIO  (AT91C_AIC_PRIOR_LOWEST + 1)
+#define ISR_BUT_PRIO  (AT91C_AIC_PRIOR_LOWEST + 0)
+#define ISR_PIT_PRIO  (AT91C_AIC_PRIOR_LOWEST + 1)
+#define ISR_ENC_PRIO  (AT91C_AIC_PRIOR_LOWEST + 2)
 
 /****************************************************************************
  *               BSP functions

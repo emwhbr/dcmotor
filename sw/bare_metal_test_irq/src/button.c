@@ -9,14 +9,16 @@
  *                                                                      *
  ************************************************************************/
 
-#include "encoder.h"
+#include "button.h"
 #include "arm_exc.h"
-#include "console.h" // TBD: playing with encoder interrupt
+#include "sam9l9260.h"
+
+#include "console.h" // TBD: playing with button interrupt
 
 /****************************************************************************
  *               Global variables
  ****************************************************************************/
-static volatile int g_encoder_cnt = 0;
+static volatile bool g_was_pressed = false;
 
 /****************************************************************************
  *               Function prototypes
@@ -28,73 +30,57 @@ static volatile int g_encoder_cnt = 0;
 
 /*****************************************************************/
 
-void encoder_initialize(void)
+void button_initialize(void)
 {
-  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOB; /* enable peripheral clock for PIOB */
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOC; /* enable peripheral clock for PIOC */
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_IRQ1; /* enable peripheral clock for IRQ1 */
 
-  /* encoder output A (PB4) */
-  AT91C_BASE_PIOB->PIO_PER = ENCODER_PIN_ENCA;   /* enable pio */
-  AT91C_BASE_PIOB->PIO_ODR = ENCODER_PIN_ENCA;   /* output disable */
-  AT91C_BASE_PIOB->PIO_PPUDR = ENCODER_PIN_ENCA; /* disable pull-up resistor */
-
-  /* encoder output B (PB5) */
-  AT91C_BASE_PIOB->PIO_PER = ENCODER_PIN_ENCB;   /* enable pio */
-  AT91C_BASE_PIOB->PIO_ODR = ENCODER_PIN_ENCB;   /* output disable */
-  AT91C_BASE_PIOB->PIO_PPUDR = ENCODER_PIN_ENCB; /* disable pull-up resistor */
+  AT91C_BASE_PIOC->PIO_PDR = BUTTON_PIN_USER_BUTTON; /* enable peripheral control of IRQ1 (PC15)*/
+  AT91C_BASE_PIOC->PIO_BSR = BUTTON_PIN_USER_BUTTON; /* peripheral B selection*/
 }
 
 /*****************************************************************/
 
-int encoder_get_counter(void)
+bool button_is_pressed(void)
 {
-  uint32_t encoder_cnt;
+  /* button has pull-up resistor, GND when pressed */
+  return ( !(AT91C_BASE_PIOC->PIO_PDSR & BUTTON_PIN_USER_BUTTON) );
+}
+
+/*****************************************************************/
+
+bool button_was_pressed(void)
+{
+  bool val;
   ARM_INT_KEY_TYPE int_lock_key;  
 
   ARM_INT_LOCK(int_lock_key);
-  encoder_cnt = g_encoder_cnt;
+  val = g_was_pressed;
+  g_was_pressed = false;
   ARM_INT_UNLOCK(int_lock_key);
 
-  return encoder_cnt;
+  return val;
 }
 
 /*****************************************************************/
 
 __attribute__ ((section (".text.fastcode")))
 
-void encoder_isr_output_ab(void)
+void button_isr_pressed(void)
 {
   /* 
-   * Application ISR: Encoder outputs A & B 
+   * Application ISR: User button pressed
    */
 
   ARM_INT_KEY_TYPE int_lock_key;
 
   /* clear this interrupt */
-  uint32_t volatile piob_isr = AT91C_BASE_PIOB->PIO_ISR;
+  /* done automatically when reading AIC_IVR (bsp_isr_irq) */
   
-  /* check interrupt cause */
-  if (piob_isr & ENCODER_PIN_ENCA) {
-    console_putln("ENCA");
-  }
-  if (piob_isr & ENCODER_PIN_ENCB) {
-    console_putln("ENCB");
-  }
-
-  if (AT91C_BASE_PIOB->PIO_PDSR & ENCODER_PIN_ENCA) {
-    console_putln("  A-H");
-  }
-  else {
-    console_putln("  A-L");
-  }
-  if (AT91C_BASE_PIOB->PIO_PDSR & ENCODER_PIN_ENCB) {
-    console_putln("  B-H");
-  }
-  else {
-    console_putln("  B-L");
-  }
+  console_putln("BUTT");
 
   ARM_INT_LOCK(int_lock_key);
-  g_encoder_cnt++;
+  g_was_pressed = true;
   ARM_INT_UNLOCK(int_lock_key);
 }
 

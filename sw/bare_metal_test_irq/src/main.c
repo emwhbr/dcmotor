@@ -12,6 +12,7 @@
 #include "bsp.h"
 #include "console.h"
 #include "led.h"
+#include "button.h"
 #include "encoder.h"
 #include "util.h"
 
@@ -92,6 +93,22 @@ void c_main()  /* main() */
     u32_hexstr(hexstr, pit_counter_delta);
     console_put("  diff:"); console_putln(hexstr);
 
+    /* get button */
+    console_put("  butt:");
+    if (button_is_pressed()) {
+      console_put("PRESSED    ");
+    }
+    else {
+      console_put("NOT PRESSED");
+    }
+    console_put(", was :");
+    if (button_was_pressed()) {
+      console_putln("PRESSED    ");
+    }
+    else {
+      console_putln("NOT PRESSED");
+    }
+
     /* get encoder counter */
     encoder_counter = encoder_get_counter();
     encoder_counter_delta = encoder_counter - encoder_counter_old;
@@ -103,11 +120,11 @@ void c_main()  /* main() */
     console_put("  diff:"); console_putln(hexstr);
 
     /* toggle LEDs */
-    led_on(SAM9L9260_STAT_LED);
-    led_off(SAM9L9260_PWR_LED);
+    led_on(LED_PIN_STAT);
+    led_off(LED_PIN_PWR);
     delay();
-    led_off(SAM9L9260_STAT_LED);
-    led_on(SAM9L9260_PWR_LED);
+    led_off(LED_PIN_STAT);
+    led_on(LED_PIN_PWR);
     delay();    
   }
 }

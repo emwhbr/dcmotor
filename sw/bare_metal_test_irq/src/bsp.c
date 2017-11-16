@@ -14,6 +14,7 @@
 #include "arm_exc.h"
 #include "console.h"
 #include "led.h"
+#include "button.h"
 #include "encoder.h"
 
 /****************************************************************************
@@ -96,6 +97,7 @@ void bsp_high_level_init(void)
   /* initialize hardware */
   console_initialize();
   led_initialize();
+  button_initialize();
   encoder_initialize();
 
   console_putln("\nBSP init HW done");
@@ -178,6 +180,7 @@ void bsp_isr_abort(char const *msg)
 static void bsp_irq_initialize(void)
 {
   uint32_t piv;
+  uint32_t volatile dummy;
 
   /*
    * Setup the secondary vector table at address 0x0000_0000,
@@ -210,15 +213,26 @@ static void bsp_irq_initialize(void)
   AT91C_BASE_AIC->AIC_SVR[AT91C_ID_SYS] = (AT91_REG) bsp_isr_pit;
   AT91C_BASE_AIC->AIC_SMR[AT91C_ID_SYS] =
     (AT91C_AIC_SRCTYPE_INT_EDGE_TRIGGERED | ISR_PIT_PRIO);
-  AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_SYS);
-  AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_SYS);
+  AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_SYS); /* clear interrupt */
+  AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_SYS); /* enable interrupt */
 
-  /* configure IRQ1 interrupt (encoder output A) */
-  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_IRQ1] = (AT91_REG) encoder_isr_output_a;
+  /* configure IRQ1 interrupt (user button pressed) */
+  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_IRQ1] = (AT91_REG) button_isr_pressed;
   AT91C_BASE_AIC->AIC_SMR[AT91C_ID_IRQ1] =
-    (AT91C_AIC_SRCTYPE_EXT_POSITIVE_EDGE | ISR_IRQ1_PRIO);
-  AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_IRQ1);
-  AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_IRQ1);
+    (AT91C_AIC_SRCTYPE_EXT_POSITIVE_EDGE | ISR_BUT_PRIO);
+  AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_IRQ1); /* clear interrupt */
+  AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_IRQ1); /* enable interrupt */
+
+  /* configure PIOB interrupt (encoder outputs A & B) */
+  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_PIOB] = (AT91_REG) encoder_isr_output_ab;
+  AT91C_BASE_AIC->AIC_SMR[AT91C_ID_PIOB] =
+    (AT91C_AIC_SRCTYPE_INT_EDGE_TRIGGERED | ISR_ENC_PRIO);
+  AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_PIOB); /* clear interrupt */
+  AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_PIOB); /* enable interrupt */
+
+  dummy = AT91C_BASE_PIOB->PIO_ISR; /* clear any pending interrupts */
+  AT91C_BASE_PIOB->PIO_IER = ENCODER_PIN_ENCA; /* enable interrupt encoder A */
+  AT91C_BASE_PIOB->PIO_IER = ENCODER_PIN_ENCB; /* enable interrupt encoder B */
 
   /* unlock IRQ/FIQ at the ARM core level */
   ARM_INT_UNLOCK(0x1F);

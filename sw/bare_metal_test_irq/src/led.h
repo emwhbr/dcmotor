@@ -12,10 +12,16 @@
 #ifndef __LED_H__
 #define __LED_H__
 
+#include <stdint.h>
+
+/* led pins */
+#define LED_PIN_STAT  SAM9L9260_PIN_LED_STAT
+#define LED_PIN_PWR   SAM9L9260_PIN_LED_PWR
+
 void led_initialize(void);
 
-void led_on(unsigned int led);
+void led_on(uint32_t pin_led);
 
-void led_off(unsigned int led);
+void led_off(uint32_t pin_led);
 
 #endif /* __LED_H__ */

@@ -12,11 +12,17 @@
 #ifndef __ENCODER_H__
 #define __ENCODER_H__
 
+#include "sam9l9260.h"
+
+/* encoder output pins, A & B */
+#define ENCODER_PIN_ENCA  AT91C_PIO_PB4
+#define ENCODER_PIN_ENCB  AT91C_PIO_PB5
+
 void encoder_initialize(void);
 
 int encoder_get_counter(void);
 
-/* ISR for encoder output A */
-void encoder_isr_output_a(void);
+/* ISR for encoder outputs A & B */
+void encoder_isr_output_ab(void);
 
 #endif /* __ENCODER_H__ */

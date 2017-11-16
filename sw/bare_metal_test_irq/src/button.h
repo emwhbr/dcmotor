@@ -9,23 +9,23 @@
  *                                                                      *
  ************************************************************************/
 
-#ifndef __SAM9L9260_H__
-#define __SAM9L9260_H__
+#ifndef __BUTTON_H__
+#define __BUTTON_H__
 
-#include <stdint.h>
+#include <stdbool.h>
 
-#include "at91sam9260.h"
+#include "sam9l9260.h"
 
-/****************************************************************************
- *               SAM9-L9260 Development Board (Olimex)
- ****************************************************************************/
-#define BIT(X)  ( (uint32_t) (1 << (X)) )
+/* user button pin */
+#define BUTTON_PIN_USER_BUTTON  SAM9L9260_PIN_USER_BUTTON
 
-/* LED definitions */
-#define SAM9L9260_PIN_LED_STAT  BIT(6) /* pin controlled by PA6 (green)  */
-#define SAM9L9260_PIN_LED_PWR   BIT(9) /* pin controlled by PA9 (yellow) */
+void button_initialize(void);
 
-/* user button */
-#define SAM9L9260_PIN_USER_BUTTON  BIT(15) /* pin controlled by PC15 */
+bool button_is_pressed(void);
 
-#endif /* __SAM9L9260_H__ */
+bool button_was_pressed(void);
+
+/* ISR for user button pressed */
+void button_isr_pressed(void);
+
+#endif /* __BUTTON_H__ */

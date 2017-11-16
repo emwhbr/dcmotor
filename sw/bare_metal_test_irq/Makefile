@@ -37,6 +37,7 @@ APP_NAME=bmti
 APP_OBJS = $(OBJ_DIR)/startup.o  \
            $(OBJ_DIR)/arm_exc.o  \
            $(OBJ_DIR)/bsp.o      \
+           $(OBJ_DIR)/button.o   \
            $(OBJ_DIR)/console.o  \
            $(OBJ_DIR)/encoder.o  \
            $(OBJ_DIR)/led.o      \

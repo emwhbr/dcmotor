@@ -15,7 +15,6 @@
 /****************************************************************************
  *               Global variables
  ****************************************************************************/
-volatile AT91S_PIO *g_pioa = (AT91S_PIO *) AT91C_BASE_PIOA;
 
 /****************************************************************************
  *               Function prototypes
@@ -29,35 +28,35 @@ volatile AT91S_PIO *g_pioa = (AT91S_PIO *) AT91C_BASE_PIOA;
 
 void led_initialize(void)
 {
-  /* set the PIO controller in PIO mode */
-  g_pioa->PIO_PER = (SAM9L9260_STAT_LED| SAM9L9260_PWR_LED);
+  /* set the PIOA controller in PIO mode */
+  AT91C_BASE_PIOA->PIO_PER = (LED_PIN_STAT | LED_PIN_PWR);
   
   /* configure the pins to output */ 
-  g_pioa->PIO_OER = (SAM9L9260_STAT_LED | SAM9L9260_PWR_LED);
+  AT91C_BASE_PIOA->PIO_OER = (LED_PIN_STAT | LED_PIN_PWR);
   
   /* disable pull-up resitors */
-  g_pioa->PIO_PPUDR = (SAM9L9260_STAT_LED | SAM9L9260_PWR_LED);
+  AT91C_BASE_PIOA->PIO_PPUDR = (LED_PIN_STAT | LED_PIN_PWR);
 }
 
 /*****************************************************************/
 
-void led_on(unsigned int led)
+void led_on(uint32_t pin_led)
 {
-  if (led == SAM9L9260_STAT_LED) {
-    g_pioa->PIO_CODR = SAM9L9260_STAT_LED; /* inverted, 0 for ON */
+  if (pin_led == LED_PIN_STAT) {
+    AT91C_BASE_PIOA->PIO_CODR = LED_PIN_STAT; /* inverted, 0 for ON */
   } else {
-    g_pioa->PIO_SODR = SAM9L9260_PWR_LED;
+    AT91C_BASE_PIOA->PIO_SODR = LED_PIN_PWR;
   }
 }
 
 /*****************************************************************/
 
-void led_off(unsigned int led)
+void led_off(uint32_t pin_led)
 {
-  if (led == SAM9L9260_STAT_LED) {
-    g_pioa->PIO_SODR = SAM9L9260_STAT_LED; /* inverted, 1 for OFF */
+  if (pin_led == LED_PIN_STAT) {
+    AT91C_BASE_PIOA->PIO_SODR = LED_PIN_STAT; /* inverted, 1 for OFF */
   } else {
-    g_pioa->PIO_CODR = SAM9L9260_PWR_LED;
+    AT91C_BASE_PIOA->PIO_CODR = LED_PIN_PWR;
   }
 }
 
