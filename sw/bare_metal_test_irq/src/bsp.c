@@ -16,6 +16,7 @@
 #include "led.h"
 #include "button.h"
 #include "encoder.h"
+#include "dbg.h"
 
 /****************************************************************************
  *               Global variables
@@ -99,6 +100,7 @@ void bsp_high_level_init(void)
   led_initialize();
   button_initialize();
   encoder_initialize();
+  dbg_initialize();
 
   console_putln("\nBSP init HW done");
 
@@ -265,7 +267,11 @@ static void bsp_isr_pit(void)
   /* clear this interrupt */
   uint32_t volatile dummy = AT91C_BASE_PITC->PITC_PIVR;
 
+  dbg_pin_on(DBG_PIN_1); // TBD: playing with PIT
+
   ARM_INT_LOCK(int_lock_key);
   g_pit_cnt++;
   ARM_INT_UNLOCK(int_lock_key);
+
+  dbg_pin_off(DBG_PIN_1);  // TBD: playing with PIT
 }

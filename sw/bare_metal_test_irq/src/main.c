@@ -9,6 +9,8 @@
  *                                                                      *
  ************************************************************************/
 
+#include <stdbool.h>
+
 #include "bsp.h"
 #include "console.h"
 #include "led.h"
@@ -43,9 +45,19 @@ void c_main()  /* main() */
   uint32_t pit_counter_old = 0;
   uint32_t pit_counter_delta;
 
+  uint32_t time_ms;
+  uint32_t time_ms_delta;
+
   int encoder_counter;
   int encoder_counter_old = 0;
   int encoder_counter_delta;
+  
+  float encoder_freq_f;
+  uint32_t encoder_freq;
+
+  bool gearbox_shaft_clockwise;
+  int gearbox_shaft_rev;
+  uint16_t gearbox_shaft_pos;
 
   char hexstr[20];
 
@@ -93,6 +105,15 @@ void c_main()  /* main() */
     u32_hexstr(hexstr, pit_counter_delta);
     console_put("  diff:"); console_putln(hexstr);
 
+    /* get absolute time in milliseconds */
+    time_ms = pit_counter * 1000 / BSP_TICKS_PER_SEC;
+    time_ms_delta = pit_counter_delta * 1000 / BSP_TICKS_PER_SEC;
+
+    u32_hexstr(hexstr, time_ms);
+    console_put("  msec:"); console_put(hexstr);
+    u32_hexstr(hexstr, time_ms_delta);
+    console_put("  diff:"); console_putln(hexstr);
+
     /* get button */
     console_put("  butt:");
     if (button_is_pressed()) {
@@ -114,14 +135,35 @@ void c_main()  /* main() */
     encoder_counter_delta = encoder_counter - encoder_counter_old;
     encoder_counter_old = encoder_counter;
 
+    encoder_freq_f = (encoder_counter_delta / 4.0f) / 
+                     (pit_counter_delta * (1.0f / BSP_TICKS_PER_SEC) );
+    encoder_freq = (uint32_t) encoder_freq_f;
+
     u32_hexstr(hexstr, encoder_counter);
     console_put("  enc :"); console_put(hexstr);
     u32_hexstr(hexstr, encoder_counter_delta);
-    console_put("  diff:"); console_putln(hexstr);
+    console_put("  diff:"); console_put(hexstr);
+    u32_hexstr(hexstr, encoder_freq);
+    console_put("  freq:"); console_putln(hexstr);
+
+    /* gearbox output shaft position */
+    encoder_get_gearbox_shaft(encoder_counter,
+			      &gearbox_shaft_clockwise,
+			      &gearbox_shaft_rev,
+			      &gearbox_shaft_pos);
+    u32_hexstr(hexstr, gearbox_shaft_rev);
+    if (gearbox_shaft_clockwise) {
+      console_put("  rev :(POS)"); console_put(hexstr);
+    }
+    else {
+      console_put("  rev :(NEG)"); console_put(hexstr);
+    }
+    u16_hexstr(hexstr, gearbox_shaft_pos);
+    console_put("  pos:"); console_putln(hexstr);
 
     /* toggle LEDs */
     led_on(LED_PIN_STAT);
-    led_off(LED_PIN_PWR);
+    led_off(LED_PIN_PWR);    
     delay();
     led_off(LED_PIN_STAT);
     led_on(LED_PIN_PWR);
@@ -138,5 +180,5 @@ void c_main()  /* main() */
 static void delay()
 {
   int i, j;
-  for(i = 0; i < 379000; i++) j += i;
+  for(i = 0; i < 369000; i++) j += i;
 }

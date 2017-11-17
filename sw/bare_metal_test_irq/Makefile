@@ -39,6 +39,7 @@ APP_OBJS = $(OBJ_DIR)/startup.o  \
            $(OBJ_DIR)/bsp.o      \
            $(OBJ_DIR)/button.o   \
            $(OBJ_DIR)/console.o  \
+           $(OBJ_DIR)/dbg.o      \
            $(OBJ_DIR)/encoder.o  \
            $(OBJ_DIR)/led.o      \
            $(OBJ_DIR)/main.o     \
@@ -46,11 +47,18 @@ APP_OBJS = $(OBJ_DIR)/startup.o  \
 
 # ----- Compiler flags
 
-CFLAGS = -mcpu=$(CPU) -g -c
+CFLAGS = -mcpu=$(CPU) -mfloat-abi=soft -g -c
 
 # ----- Assembler flags
 
-AFLAGS = -mcpu=$(CPU) -g 
+AFLAGS = -mcpu=$(CPU) -mfloat-abi=soft -g 
+
+# ----- Linker flags
+
+LD_PATH = ${CROSS_TOOLCHAIN_PATH}/lib/gcc/arm-eabi/6.3.1
+
+LFLAGS = -L$(LD_PATH) 
+LFLAGS += -lgcc
 
 # ------ Targets
 
@@ -62,7 +70,7 @@ app.bin: app.elf
 	$(OBJCOPY) -O binary $(OBJ_DIR)/$(APP_NAME).elf $(OBJ_DIR)/$(APP_NAME).bin
 
 app.elf: $(APP_OBJS)
-	$(LD) -T $(SRC_DIR)/$(APP_NAME).ld $(APP_OBJS) -o $(OBJ_DIR)/$(APP_NAME).elf
+	$(LD) -T $(SRC_DIR)/$(APP_NAME).ld $(APP_OBJS) $(LFLAGS) -o $(OBJ_DIR)/$(APP_NAME).elf
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.s
 	$(AS) $(AFLAGS) -o $@ $<

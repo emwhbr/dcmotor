@@ -21,7 +21,7 @@
 #define BSP_MCK  (204800000 / 2)   /* 102.400 MHz, configured in at91bootstrap */
 
 /* system clock tick rate [Hz] */
-#define BSP_TICKS_PER_SEC  (100)
+#define BSP_TICKS_PER_SEC  (1000)
 
 /* internal SRAM, first bank, addr:0x0020_0000 */
 #define SRAM_ADDR  (AT91C_IRAM_1)
