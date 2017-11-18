@@ -15,6 +15,7 @@
 #include "console.h"
 #include "led.h"
 #include "button.h"
+#include "motor.h"
 #include "encoder.h"
 #include "dbg.h"
 
@@ -99,7 +100,7 @@ void bsp_high_level_init(void)
   console_initialize();
   led_initialize();
   button_initialize();
-  encoder_initialize();
+  motor_initialize();
   dbg_initialize();
 
   console_putln("\nBSP init HW done");

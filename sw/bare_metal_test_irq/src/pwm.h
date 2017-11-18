@@ -9,19 +9,13 @@
  *                                                                      *
  ************************************************************************/
 
-#ifndef __DBG_H__
-#define __DBG_H__
+#ifndef __PWM_H__
+#define __PWM_H__
 
-#include "sam9l9260.h"
+#include <stdint.h>
 
-/* debug output pins */
-#define DBG_PIN_1  AT91C_PIO_PB2 /* external connector pin9 */
-#define DBG_PIN_2  AT91C_PIO_PB3 /* external connector pin11 */
+void pwm_initialize(void);
 
-void dbg_initialize(void);
+void pwm_set_duty(uint16_t duty_ctrl);
 
-void dbg_pin_on(uint32_t pin);
-
-void dbg_pin_off(uint32_t pin);
-
-#endif /* __DBG_H__ */
+#endif /* __PWM_H__ */

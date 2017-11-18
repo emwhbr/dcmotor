@@ -9,11 +9,9 @@
  *                                                                      *
  ************************************************************************/
 
-#include "dbg.h"
-
-/****************************************************************************
- *               Global variables
- ****************************************************************************/
+#include "motor.h"
+#include "encoder.h"
+#include "pwm.h"
 
 /****************************************************************************
  *               Function prototypes
@@ -25,33 +23,43 @@
 
 /*****************************************************************/
 
-void dbg_initialize(void)
+void motor_initialize()
 {
+  /*
+   * initalize motor DIRECTION control
+   */
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOB; /* enable peripheral clock for PIOB */
 
-  /* debug output pin 1 (PB1) */
-  AT91C_BASE_PIOB->PIO_PER = DBG_PIN_1;   /* enable pio */
-  AT91C_BASE_PIOB->PIO_OER = DBG_PIN_1;   /* output enable */
-  AT91C_BASE_PIOB->PIO_PPUDR = DBG_PIN_1; /* disable pull-up resistor */
+  /* direction pin (PB1) */
+  AT91C_BASE_PIOB->PIO_PER = MOTOR_PIN_DIR;   /* enable pio */
+  AT91C_BASE_PIOB->PIO_OER = MOTOR_PIN_DIR;   /* output enable */
+  AT91C_BASE_PIOB->PIO_PPUDR = MOTOR_PIN_DIR; /* disable pull-up resistor */
 
-  /* debug output pin 2 (PB2) */
-  AT91C_BASE_PIOB->PIO_PER = DBG_PIN_2;   /* enable pio */
-  AT91C_BASE_PIOB->PIO_OER = DBG_PIN_2;   /* output enable */
-  AT91C_BASE_PIOB->PIO_PPUDR = DBG_PIN_2; /* disable pull-up resistor */
+  /*
+   * initialize motor ENCODER and PWM control
+   */
+  encoder_initialize();
+  pwm_initialize();
+
+  /* set initial duty to zero, clockwise */
+  motor_ctrl(true, 0x0000);
 }
 
 /*****************************************************************/
 
-void dbg_pin_on(uint32_t pin)
+void motor_ctrl(bool clockwise,
+		uint16_t duty)
 {
-  AT91C_BASE_PIOB->PIO_SODR = pin;
-}
+  /* set motor direction */
+  if (clockwise) {
+    AT91C_BASE_PIOB->PIO_CODR = MOTOR_PIN_DIR;
+  }
+  else {
+    AT91C_BASE_PIOB->PIO_SODR = MOTOR_PIN_DIR;
+  }
 
-/*****************************************************************/
-
-void dbg_pin_off(uint32_t pin)
-{
-  AT91C_BASE_PIOB->PIO_CODR = pin;
+  /* set motor speed */
+  pwm_set_duty(duty);
 }
 
 /****************************************************************************

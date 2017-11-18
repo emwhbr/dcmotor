@@ -18,7 +18,7 @@
  *               BSP definitions
  ****************************************************************************/
 /* master clock [Hz]*/
-#define BSP_MCK  (204800000 / 2)   /* 102.400 MHz, configured in at91bootstrap */
+#define BSP_MCK  (204800000 / 2)   /* 102.400 MHz, configured in AT91Bootstrap */
 
 /* system clock tick rate [Hz] */
 #define BSP_TICKS_PER_SEC  (1000)

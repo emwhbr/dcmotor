@@ -111,7 +111,7 @@ void encoder_get_gearbox_shaft(const int encoder_counter,
   }
   else {
     *clockwise = false;
-    gearbox_n_rev *= 1.0;
+    gearbox_n_rev *= -1.0;
     gearbox_part_rev *= -1.0f;
   }
   *rev = gearbox_n_rev;

@@ -15,12 +15,24 @@
 #include "console.h"
 #include "led.h"
 #include "button.h"
+#include "motor.h"
 #include "encoder.h"
 #include "util.h"
 
 /****************************************************************************
  *               Types and definitions
  ****************************************************************************/
+/* PWM duty control values */
+#define PWM_DUTY_0   0x0000
+#define PWM_DUTY_1   0x028d
+#define PWM_DUTY_5   0x0ccc
+#define PWM_DUTY_10  0x1999
+#define PWM_DUTY_25  0x3fff
+#define PWM_DUTY_50  0x7fff
+#define PWM_DUTY_75  0xbfff
+#define PWM_DUTY_90  0xe665
+#define PWM_DUTY_99  0xfd6f
+#define PWM_DUTY_100 0xffff
 
 /****************************************************************************
  *               Global variables
@@ -30,7 +42,12 @@
 /****************************************************************************
  *               Function prototypes
  ****************************************************************************/
-static void delay();
+static void test_bsp_pit(uint32_t *pit_counter_delta);
+static void test_button(void);
+static void test_encoder(const uint32_t *pit_counter_delta);
+static void test_motor(void);
+
+static void delay(void);
 
 /*****************************************************************/
 
@@ -40,24 +57,8 @@ void c_main()  /* main() */
 
   uint32_t *mem_ptr;
   uint32_t mem_val;
-
-  uint32_t pit_counter;
-  uint32_t pit_counter_old = 0;
-  uint32_t pit_counter_delta;
-
-  uint32_t time_ms;
-  uint32_t time_ms_delta;
-
-  int encoder_counter;
-  int encoder_counter_old = 0;
-  int encoder_counter_delta;
   
-  float encoder_freq_f;
-  uint32_t encoder_freq;
-
-  bool gearbox_shaft_clockwise;
-  int gearbox_shaft_rev;
-  uint16_t gearbox_shaft_pos;
+  uint32_t pit_counter_delta;    
 
   char hexstr[20];
 
@@ -86,8 +87,10 @@ void c_main()  /* main() */
     console_putln(hexstr);
   }
 
-  /* toggle green and yellow led
-   * during IRQ test */
+  /* 
+   * toggle green and yellow led
+   * during IRQ test
+   */
   while (1) {
     console_putln("----------");
 
@@ -95,71 +98,17 @@ void c_main()  /* main() */
     u16_hexstr(hexstr, counter++);
     console_put("  cnt :"); console_putln(hexstr);
 
-    /* get BSP PIT counter */
-    pit_counter = bsp_get_pit_counter();
-    pit_counter_delta = pit_counter - pit_counter_old;
-    pit_counter_old = pit_counter;
+    /* test BSP PIT */
+    test_bsp_pit(&pit_counter_delta);
 
-    u32_hexstr(hexstr, pit_counter);
-    console_put("  pit :"); console_put(hexstr);
-    u32_hexstr(hexstr, pit_counter_delta);
-    console_put("  diff:"); console_putln(hexstr);
+    /* test BUTTON */
+    test_button();
 
-    /* get absolute time in milliseconds */
-    time_ms = pit_counter * 1000 / BSP_TICKS_PER_SEC;
-    time_ms_delta = pit_counter_delta * 1000 / BSP_TICKS_PER_SEC;
+    /* test ENCODER */
+    test_encoder(&pit_counter_delta);
 
-    u32_hexstr(hexstr, time_ms);
-    console_put("  msec:"); console_put(hexstr);
-    u32_hexstr(hexstr, time_ms_delta);
-    console_put("  diff:"); console_putln(hexstr);
-
-    /* get button */
-    console_put("  butt:");
-    if (button_is_pressed()) {
-      console_put("PRESSED    ");
-    }
-    else {
-      console_put("NOT PRESSED");
-    }
-    console_put(", was :");
-    if (button_was_pressed()) {
-      console_putln("PRESSED    ");
-    }
-    else {
-      console_putln("NOT PRESSED");
-    }
-
-    /* get encoder counter */
-    encoder_counter = encoder_get_counter();
-    encoder_counter_delta = encoder_counter - encoder_counter_old;
-    encoder_counter_old = encoder_counter;
-
-    encoder_freq_f = (encoder_counter_delta / 4.0f) / 
-                     (pit_counter_delta * (1.0f / BSP_TICKS_PER_SEC) );
-    encoder_freq = (uint32_t) encoder_freq_f;
-
-    u32_hexstr(hexstr, encoder_counter);
-    console_put("  enc :"); console_put(hexstr);
-    u32_hexstr(hexstr, encoder_counter_delta);
-    console_put("  diff:"); console_put(hexstr);
-    u32_hexstr(hexstr, encoder_freq);
-    console_put("  freq:"); console_putln(hexstr);
-
-    /* gearbox output shaft position */
-    encoder_get_gearbox_shaft(encoder_counter,
-			      &gearbox_shaft_clockwise,
-			      &gearbox_shaft_rev,
-			      &gearbox_shaft_pos);
-    u32_hexstr(hexstr, gearbox_shaft_rev);
-    if (gearbox_shaft_clockwise) {
-      console_put("  rev :(POS)"); console_put(hexstr);
-    }
-    else {
-      console_put("  rev :(NEG)"); console_put(hexstr);
-    }
-    u16_hexstr(hexstr, gearbox_shaft_pos);
-    console_put("  pos:"); console_putln(hexstr);
+    /* test MOTOR */
+    test_motor();    
 
     /* toggle LEDs */
     led_on(LED_PIN_STAT);
@@ -177,7 +126,127 @@ void c_main()  /* main() */
 
 /*****************************************************************/
 
-static void delay()
+static void test_bsp_pit(uint32_t *pit_counter_delta)
+{
+  uint32_t pit_counter;
+  static uint32_t pit_counter_old = 0; 
+  uint32_t time_ms;
+  uint32_t time_ms_delta;
+
+  char hexstr[20];
+
+  /* get BSP PIT counter */
+  pit_counter = bsp_get_pit_counter();
+  *pit_counter_delta = pit_counter - pit_counter_old;
+  pit_counter_old = pit_counter;
+  
+  u32_hexstr(hexstr, pit_counter);
+  console_put("  pit :"); console_put(hexstr);
+  u32_hexstr(hexstr, *pit_counter_delta);
+  console_put("  diff:"); console_putln(hexstr);
+  
+  /* get absolute time in milliseconds */
+  time_ms = pit_counter * 1000 / BSP_TICKS_PER_SEC;
+  time_ms_delta = *pit_counter_delta * 1000 / BSP_TICKS_PER_SEC;
+  
+  u32_hexstr(hexstr, time_ms);
+  console_put("  msec:"); console_put(hexstr);
+  u32_hexstr(hexstr, time_ms_delta);
+  console_put("  diff:"); console_putln(hexstr);  
+}
+
+/*****************************************************************/
+
+static void test_button(void)
+{
+  /* get button */
+  console_put("  butt:");
+  if (button_is_pressed()) {
+    console_put("PRESSED    ");
+  }
+  else {
+    console_put("NOT PRESSED");
+  }
+  console_put(", was :");
+  if (button_was_pressed()) {
+    console_putln("PRESSED    ");
+  }
+  else {
+    console_putln("NOT PRESSED");
+  }
+}
+
+/*****************************************************************/
+
+static void test_encoder(const uint32_t *pit_counter_delta)
+{ 
+  static int encoder_counter_old = 0;
+  int encoder_counter;
+  int encoder_counter_delta;
+  
+  float encoder_freq_f;
+  uint32_t encoder_freq;
+
+  bool gearbox_shaft_clockwise;
+  int gearbox_shaft_rev;
+  uint16_t gearbox_shaft_pos;
+
+  char hexstr[20];
+
+  /* get encoder counter */
+  encoder_counter = encoder_get_counter();
+  encoder_counter_delta = encoder_counter - encoder_counter_old;
+  encoder_counter_old = encoder_counter;
+  
+  encoder_freq_f = (encoder_counter_delta / 4.0f) / 
+    (*pit_counter_delta * (1.0f / BSP_TICKS_PER_SEC) );
+  encoder_freq = (uint32_t) encoder_freq_f;
+  
+  u32_hexstr(hexstr, encoder_counter);
+  console_put("  enc :"); console_put(hexstr);
+  u32_hexstr(hexstr, encoder_counter_delta);
+  console_put("  diff:"); console_put(hexstr);
+  u32_hexstr(hexstr, encoder_freq);
+  console_put("  freq:"); console_putln(hexstr);
+
+  /* gearbox output shaft position */
+  encoder_get_gearbox_shaft(encoder_counter,
+			    &gearbox_shaft_clockwise,
+			    &gearbox_shaft_rev,
+			    &gearbox_shaft_pos);
+  u32_hexstr(hexstr, gearbox_shaft_rev);
+  if (gearbox_shaft_clockwise) {
+    console_put("  rev :(POS)"); console_put(hexstr);
+  }
+  else {
+    console_put("  rev :(NEG)"); console_put(hexstr);
+  }
+  u16_hexstr(hexstr, gearbox_shaft_pos);
+  console_put("  pos:"); console_putln(hexstr);
+}
+
+/*****************************************************************/
+
+static void test_motor(void)
+{
+  bool motor_ctrl_clockwise;
+  uint16_t motor_ctrl_duty = PWM_DUTY_25;
+
+  if (button_is_pressed()) {
+    motor_ctrl_clockwise = false;
+  }
+  else {
+    motor_ctrl_clockwise = true;
+  }
+
+  /* motor control */
+  motor_ctrl(motor_ctrl_clockwise,
+	     motor_ctrl_duty);
+}
+
+/*****************************************************************/
+
+static void delay(void)
 {
   int i, j;
   for(i = 0; i < 369000; i++) j += i;

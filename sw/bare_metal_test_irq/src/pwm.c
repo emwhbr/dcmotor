@@ -9,7 +9,8 @@
  *                                                                      *
  ************************************************************************/
 
-#include "dbg.h"
+#include "pwm.h"
+#include "sam9l9260.h"
 
 /****************************************************************************
  *               Global variables
@@ -25,33 +26,46 @@
 
 /*****************************************************************/
 
-void dbg_initialize(void)
+void pwm_initialize(void)
 {
-  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_PIOB; /* enable peripheral clock for PIOB */
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_TC3;  /* enable peripheral clock for timer/counter 3 */
 
-  /* debug output pin 1 (PB1) */
-  AT91C_BASE_PIOB->PIO_PER = DBG_PIN_1;   /* enable pio */
-  AT91C_BASE_PIOB->PIO_OER = DBG_PIN_1;   /* output enable */
-  AT91C_BASE_PIOB->PIO_PPUDR = DBG_PIN_1; /* disable pull-up resistor */
+  AT91C_BASE_PIOB->PIO_PDR = AT91C_PB0_TIOA3; /* enable peripheral control of TIOA3 (PB0)*/
+  AT91C_BASE_PIOB->PIO_BSR = AT91C_PB0_TIOA3; /* peripheral B selection*/
 
-  /* debug output pin 2 (PB2) */
-  AT91C_BASE_PIOB->PIO_PER = DBG_PIN_2;   /* enable pio */
-  AT91C_BASE_PIOB->PIO_OER = DBG_PIN_2;   /* output enable */
-  AT91C_BASE_PIOB->PIO_PPUDR = DBG_PIN_2; /* disable pull-up resistor */
+  AT91C_BASE_TC3->TC_CCR = AT91C_TC_CLKDIS; /* disable counter clock */
+
+  AT91C_BASE_TC3->TC_CMR = 
+    AT91C_TC_ASWTRG_SET      |      /* software trigger sets TIOA      */
+    AT91C_TC_ACPC_TOGGLE     |      /* RC compare toggle TIOA          */
+    AT91C_TC_ACPA_TOGGLE     |      /* RA compare toggle TIOA          */
+    AT91C_TC_WAVE            |      /* waveform mode                   */
+    AT91C_TC_WAVESEL_UP_AUTO |      /* automatic trigger on RC compare */
+    AT91C_TC_CLKS_TIMER_DIV1_CLOCK; /* TIMER_CLOCK1 = MCK/2            */
+  
+  /* assumes MCK=102.4MHz, clock selected = MCK/2=51.2MHz (T=19.53ns) */
+  AT91C_BASE_TC3->TC_RA = 0x0000; /* 0 % duty */
+  AT91C_BASE_TC3->TC_RC = 0xffff; /* 65535 (T=19.53ns x 65535 = 1.28ms, F=781.3Hz PWM frequency) */
+
+  AT91C_BASE_TC3->TC_CCR = AT91C_TC_CLKEN; /* enable counter clock */
 }
 
 /*****************************************************************/
 
-void dbg_pin_on(uint32_t pin)
+void pwm_set_duty(uint16_t duty_ctrl)
 {
-  AT91C_BASE_PIOB->PIO_SODR = pin;
-}
+  /* don't allow duty control value 0x0000 or 0xffff,
+   * this will generate 50% duty */
+  if (duty_ctrl == 0) {
+    duty_ctrl = 0x0001;
+  }
+  if (duty_ctrl == 0xffff) {
+    duty_ctrl = 0xfffe;
+  }
 
-/*****************************************************************/
-
-void dbg_pin_off(uint32_t pin)
-{
-  AT91C_BASE_PIOB->PIO_CODR = pin;
+  /* apply new duty control */
+  AT91C_BASE_TC3->TC_RA = duty_ctrl;
+  AT91C_BASE_TC3->TC_CCR = AT91C_TC_SWTRG; /* reset and start counter clock */
 }
 
 /****************************************************************************

@@ -9,19 +9,20 @@
  *                                                                      *
  ************************************************************************/
 
-#ifndef __DBG_H__
-#define __DBG_H__
+#ifndef __MOTOR_H__
+#define __MOTOR_H__
+
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "sam9l9260.h"
 
-/* debug output pins */
-#define DBG_PIN_1  AT91C_PIO_PB2 /* external connector pin9 */
-#define DBG_PIN_2  AT91C_PIO_PB3 /* external connector pin11 */
+/* motor direction control pin */
+#define MOTOR_PIN_DIR  AT91C_PIO_PB1
 
-void dbg_initialize(void);
+void motor_initialize();
 
-void dbg_pin_on(uint32_t pin);
+void motor_ctrl(bool clockwise,
+		uint16_t duty);
 
-void dbg_pin_off(uint32_t pin);
-
-#endif /* __DBG_H__ */
+#endif /* __MOTOR_H__ */
