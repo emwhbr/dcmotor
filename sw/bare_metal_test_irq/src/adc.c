@@ -10,7 +10,6 @@
  ************************************************************************/
 
 #include "adc.h"
-#include "dbg.h"
 
 /****************************************************************************
  *               Global variables
@@ -63,12 +62,8 @@ uint16_t adc_get_value(void)
   /* start conversion */
   AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
 
-  dbg_pin_on(DBG_PIN_1); // TBD: playing with ADC
-
   /* wait for conversion to complete (AD0) */
   while ( !(AT91C_BASE_ADC->ADC_SR & AT91C_ADC_EOC0) ) {;}
-
-  dbg_pin_off(DBG_PIN_1);  // TBD: playing with ADC
 
   /* read conversion result (AD0) */
   return (uint16_t) (AT91C_BASE_ADC->ADC_CDR0 & 0x3ff);

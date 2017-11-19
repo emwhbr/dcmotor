@@ -29,12 +29,16 @@
 /* IRQ priorities */
 #define ISR_BUT_PRIO  (AT91C_AIC_PRIOR_LOWEST + 0)
 #define ISR_PIT_PRIO  (AT91C_AIC_PRIOR_LOWEST + 1)
-#define ISR_ENC_PRIO  (AT91C_AIC_PRIOR_LOWEST + 2)
+#define ISR_TC0_PRIO  (AT91C_AIC_PRIOR_LOWEST + 2)
+#define ISR_ENC_PRIO  (AT91C_AIC_PRIOR_LOWEST + 3)
+
+/* Timer Counter - callback function */
+typedef void (*tc_callback)(void);
 
 /****************************************************************************
  *               BSP functions
  ****************************************************************************/
-void bsp_high_level_init(void);
+void bsp_high_level_init(tc_callback tc0_callback);
 
 uint32_t bsp_get_pit_counter(void);
 

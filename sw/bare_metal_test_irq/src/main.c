@@ -39,6 +39,7 @@ static void test_button(void);
 static void test_encoder(uint32_t pit_counter_delta);
 static void test_adc(uint16_t *adc_value);
 static void test_motor(uint16_t adc_value);
+static void test_tc0_callback(void);
 
 static void delay(void);
 
@@ -58,7 +59,7 @@ void c_main()  /* main() */
   char hexstr[20];
 
   /* initialize BSP */
-  bsp_high_level_init();
+  bsp_high_level_init(test_tc0_callback);
 
   console_putln("\nBare metal IRQ alive!");
 
@@ -269,6 +270,19 @@ static void test_motor(uint16_t adc_value)
   console_put("  shaft:"); console_put(hexstr);
   u16_hexstr(hexstr, max_shaft_position);
   console_put(" / "); console_putln(hexstr);
+}
+
+/*****************************************************************/
+
+static void test_tc0_callback(void)
+{
+  static uint16_t cnt = 0;
+
+  // this should happen at 0.5Hz, TC0 frequency is 100Hz (T=10ms)
+  if (++cnt >= 200) {
+    console_putln("TC0-CBF");
+    cnt = 0;
+  }
 }
 
 /*****************************************************************/

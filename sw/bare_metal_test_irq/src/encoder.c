@@ -15,7 +15,7 @@
 /****************************************************************************
  *               Global variables
  ****************************************************************************/
-static volatile int g_encoder_cnt = 0;
+static volatile int g_encoder_cnt_abs = 0; /* absolute position */
 
 /* 
  * Reading quadrature encoders with interrupts:
@@ -81,7 +81,7 @@ int encoder_get_counter(void)
   ARM_INT_KEY_TYPE int_lock_key;  
 
   ARM_INT_LOCK(int_lock_key);
-  encoder_cnt = g_encoder_cnt;
+  encoder_cnt = g_encoder_cnt_abs;
   ARM_INT_UNLOCK(int_lock_key);
 
   return encoder_cnt;
@@ -177,7 +177,7 @@ void encoder_isr_output_ab(void)
 
   /* lookup table gives us direction and count */
   ARM_INT_LOCK(int_lock_key);
-  g_encoder_cnt += g_encoder_table[g_encoder_state];
+  g_encoder_cnt_abs += g_encoder_table[g_encoder_state];
   ARM_INT_UNLOCK(int_lock_key);
 }
 

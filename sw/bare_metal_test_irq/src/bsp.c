@@ -23,14 +23,22 @@
 /****************************************************************************
  *               Global variables
  ****************************************************************************/
-static volatile uint32_t g_pit_cnt = 0;
+static volatile uint32_t g_pit_cnt = 0; /* PIT counter */
+
+static volatile tc_callback g_tc0_callback = 0; /* Timer Counter 0 -
+						 * callback function */
 
 /****************************************************************************
  *               Function prototypes
  ****************************************************************************/
-static void bsp_irq_initialize(void);
+/* BSP internal setup */
+static void bsp_tc_initialize(void);
+static void bsp_irq_initialize(tc_callback tc0_callback);
+
+/* BSP internal interrupt handlers */
 static void bsp_isr_spur(void);
 static void bsp_isr_pit(void);
+static void bsp_isr_tc0(void);
 
 /****************************************************************************
  *               Exported functions
@@ -93,7 +101,7 @@ void bsp_low_level_init(void)
 
 /*****************************************************************/
 
-void bsp_high_level_init(void)
+void bsp_high_level_init(tc_callback tc0_callback)
 {
   /* Invoked early by the C main application */
 
@@ -107,8 +115,11 @@ void bsp_high_level_init(void)
 
   console_putln("\nBSP init HW done");
 
-  /* setup interrupt handling */
-  bsp_irq_initialize();
+  /* setup BSP timer/counters */
+  bsp_tc_initialize();
+
+  /* setup BSP interrupt handling */
+  bsp_irq_initialize(tc0_callback);
 
   console_putln("BSP init IRQ done");
 }
@@ -182,7 +193,30 @@ void bsp_isr_abort(char const *msg)
 
 /*****************************************************************/
 
-static void bsp_irq_initialize(void)
+static void bsp_tc_initialize(void)
+{
+  /*
+   * setup Timer Counter 0 (TC0), F=100Hz, T=10ms
+   */
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_TC0;  /* enable peripheral clock for timer/counter 0 */
+
+  AT91C_BASE_TC0->TC_CCR = AT91C_TC_CLKDIS; /* disable counter clock  */
+  AT91C_BASE_TC0->TC_IDR = ~0;              /* disable all interrupts */
+
+  AT91C_BASE_TC0->TC_CMR =
+    AT91C_TC_CPCTRG |               /* RC Compare trigger enable */
+    AT91C_TC_CLKS_TIMER_DIV4_CLOCK; /* TIMER_CLOCK4 = MCK/128    */
+
+  /* assumes MCK=102.4MHz, clock selected = MCK/128=0.8MHz (T=1.25us)
+   * max range = 65535 x 1.25 = 81.9ms */
+  AT91C_BASE_TC0->TC_RC = 0x1f40; /* 8000 (T=1.25us x 8000 = 10ms, F=100Hz) */
+
+  AT91C_BASE_TC0->TC_CCR = AT91C_TC_CLKEN; /* enable counter clock */
+}
+
+/*****************************************************************/
+
+static void bsp_irq_initialize(tc_callback tc0_callback)
 {
   uint32_t piv;
   uint32_t volatile dummy;
@@ -209,7 +243,7 @@ static void bsp_irq_initialize(void)
   }
   
   /* configure spurious ISR */
-  AT91C_BASE_AIC->AIC_SPU  = (AT91_REG) bsp_isr_spur;
+  AT91C_BASE_AIC->AIC_SPU = (AT91_REG) bsp_isr_spur;
 
   /* configure the PIT interrupt */
   piv = (BSP_MCK / 16 / BSP_TICKS_PER_SEC) - 1;
@@ -220,6 +254,18 @@ static void bsp_irq_initialize(void)
     (AT91C_AIC_SRCTYPE_INT_EDGE_TRIGGERED | ISR_PIT_PRIO);
   AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_SYS); /* clear interrupt */
   AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_SYS); /* enable interrupt */
+
+  /* configure the TIMER COUNTER 0 interrupt */
+  AT91C_BASE_AIC->AIC_SVR[AT91C_ID_TC0] = (AT91_REG) bsp_isr_tc0;
+  AT91C_BASE_AIC->AIC_SMR[AT91C_ID_TC0] =
+    (AT91C_AIC_SRCTYPE_INT_EDGE_TRIGGERED | ISR_TC0_PRIO);
+  AT91C_BASE_AIC->AIC_ICCR = (1 << AT91C_ID_TC0); /* clear interrupt */
+  AT91C_BASE_AIC->AIC_IECR = (1 << AT91C_ID_TC0); /* enable interrupt */
+
+  g_tc0_callback = tc0_callback;           /* register callback function */
+  dummy = AT91C_BASE_TC0->TC_SR;           /* clear any pending interrupts */
+  AT91C_BASE_TC0->TC_IER = AT91C_TC_CPCS;  /* enable interrupt RC compare */ 
+  AT91C_BASE_TC0->TC_CCR = AT91C_TC_SWTRG; /* reset and start counter clock */
 
   /* configure IRQ1 interrupt (user button pressed) */
   AT91C_BASE_AIC->AIC_SVR[AT91C_ID_IRQ1] = (AT91_REG) button_isr_pressed;
@@ -273,4 +319,28 @@ static void bsp_isr_pit(void)
   ARM_INT_LOCK(int_lock_key);
   g_pit_cnt++;
   ARM_INT_UNLOCK(int_lock_key);
+}
+
+/*****************************************************************/
+
+__attribute__ ((section (".text.fastcode")))
+
+static void bsp_isr_tc0(void)
+{
+  /* 
+   * BSP ISR: Timer Counter 0 (TC0)
+   */
+
+  /* clear this interrupt */
+  uint32_t volatile dummy =  AT91C_BASE_TC0->TC_SR;
+
+  dbg_pin_on(DBG_PIN_1); // TBD: playing with TC0
+
+  // execute callback function (if any)
+  if (g_tc0_callback) {
+    (*g_tc0_callback)();
+  }
+
+  dbg_pin_off(DBG_PIN_1);  // TBD: playing with TC0
+
 }
