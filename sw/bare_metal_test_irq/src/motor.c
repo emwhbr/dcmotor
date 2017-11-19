@@ -62,6 +62,20 @@ void motor_ctrl(bool clockwise,
   pwm_set_duty(duty);
 }
 
+/*****************************************************************/
+
+uint16_t motor_get_shaft_position(void)
+{
+  return encoder_get_gearbox_shaft_position();
+}
+
+/*****************************************************************/
+
+uint16_t motor_shaft_max_position(void)
+{
+  return ( ENCODER_CPR * (uint16_t)ENCODER_GEAR );
+}
+
 /****************************************************************************
  *               Private functions
  ****************************************************************************/

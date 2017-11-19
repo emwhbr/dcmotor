@@ -49,10 +49,12 @@ void encoder_initialize(void);
 
 int encoder_get_counter(void);
 
-void encoder_get_gearbox_shaft(const int encoder_counter,
-			       bool *clockwise,
-			       int *rev,
-			       uint16_t *pos);
+void encoder_gearbox_shaft(const int encoder_counter,
+			   bool *positive,
+			   int *revolution,
+			   uint16_t *position);
+
+uint16_t encoder_get_gearbox_shaft_position(void);
 
 /* ISR for encoder outputs A & B */
 void encoder_isr_output_ab(void);

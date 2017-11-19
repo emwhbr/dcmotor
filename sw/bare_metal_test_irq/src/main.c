@@ -17,22 +17,14 @@
 #include "button.h"
 #include "motor.h"
 #include "encoder.h"
+#include "adc.h"
 #include "util.h"
 
 /****************************************************************************
  *               Types and definitions
  ****************************************************************************/
-/* PWM duty control values */
-#define PWM_DUTY_0   0x0000
-#define PWM_DUTY_1   0x028d
-#define PWM_DUTY_5   0x0ccc
-#define PWM_DUTY_10  0x1999
-#define PWM_DUTY_25  0x3fff
-#define PWM_DUTY_50  0x7fff
-#define PWM_DUTY_75  0xbfff
-#define PWM_DUTY_90  0xe665
-#define PWM_DUTY_99  0xfd6f
-#define PWM_DUTY_100 0xffff
+/* ADC=0-1023 ==> PWM=0-65535 */
+#define ADC_DUTY_FACTOR  64
 
 /****************************************************************************
  *               Global variables
@@ -44,8 +36,9 @@
  ****************************************************************************/
 static void test_bsp_pit(uint32_t *pit_counter_delta);
 static void test_button(void);
-static void test_encoder(const uint32_t *pit_counter_delta);
-static void test_motor(void);
+static void test_encoder(uint32_t pit_counter_delta);
+static void test_adc(uint16_t *adc_value);
+static void test_motor(uint16_t adc_value);
 
 static void delay(void);
 
@@ -58,7 +51,9 @@ void c_main()  /* main() */
   uint32_t *mem_ptr;
   uint32_t mem_val;
   
-  uint32_t pit_counter_delta;    
+  uint32_t pit_counter_delta;
+
+  uint16_t adc_value;
 
   char hexstr[20];
 
@@ -105,10 +100,13 @@ void c_main()  /* main() */
     test_button();
 
     /* test ENCODER */
-    test_encoder(&pit_counter_delta);
+    test_encoder(pit_counter_delta);
+
+    /* test ADC */
+    test_adc(&adc_value);
 
     /* test MOTOR */
-    test_motor();    
+    test_motor(adc_value);
 
     /* toggle LEDs */
     led_on(LED_PIN_STAT);
@@ -178,7 +176,7 @@ static void test_button(void)
 
 /*****************************************************************/
 
-static void test_encoder(const uint32_t *pit_counter_delta)
+static void test_encoder(uint32_t pit_counter_delta)
 { 
   static int encoder_counter_old = 0;
   int encoder_counter;
@@ -187,7 +185,7 @@ static void test_encoder(const uint32_t *pit_counter_delta)
   float encoder_freq_f;
   uint32_t encoder_freq;
 
-  bool gearbox_shaft_clockwise;
+  bool gearbox_shaft_positive;
   int gearbox_shaft_rev;
   uint16_t gearbox_shaft_pos;
 
@@ -199,7 +197,7 @@ static void test_encoder(const uint32_t *pit_counter_delta)
   encoder_counter_old = encoder_counter;
   
   encoder_freq_f = (encoder_counter_delta / 4.0f) / 
-    (*pit_counter_delta * (1.0f / BSP_TICKS_PER_SEC) );
+    (pit_counter_delta * (1.0f / BSP_TICKS_PER_SEC) );
   encoder_freq = (uint32_t) encoder_freq_f;
   
   u32_hexstr(hexstr, encoder_counter);
@@ -210,12 +208,12 @@ static void test_encoder(const uint32_t *pit_counter_delta)
   console_put("  freq:"); console_putln(hexstr);
 
   /* gearbox output shaft position */
-  encoder_get_gearbox_shaft(encoder_counter,
-			    &gearbox_shaft_clockwise,
-			    &gearbox_shaft_rev,
-			    &gearbox_shaft_pos);
+  encoder_gearbox_shaft(encoder_counter,
+			&gearbox_shaft_positive,
+			&gearbox_shaft_rev,
+			&gearbox_shaft_pos);
   u32_hexstr(hexstr, gearbox_shaft_rev);
-  if (gearbox_shaft_clockwise) {
+  if (gearbox_shaft_positive) {
     console_put("  rev :(POS)"); console_put(hexstr);
   }
   else {
@@ -227,10 +225,28 @@ static void test_encoder(const uint32_t *pit_counter_delta)
 
 /*****************************************************************/
 
-static void test_motor(void)
+static void test_adc(uint16_t *adc_value)
+{
+  char hexstr[20];
+
+  /* ADC conversion */
+  *adc_value = adc_get_value();
+
+  u16_hexstr(hexstr, *adc_value);
+  console_put("  adc :"); console_putln(hexstr);
+}
+
+/*****************************************************************/
+
+static void test_motor(uint16_t adc_value)
 {
   bool motor_ctrl_clockwise;
-  uint16_t motor_ctrl_duty = PWM_DUTY_25;
+  uint16_t motor_ctrl_duty = adc_value * ADC_DUTY_FACTOR;
+  uint16_t shaft_position;
+
+  const uint16_t max_shaft_position = motor_shaft_max_position();
+
+  char hexstr[20];
 
   if (button_is_pressed()) {
     motor_ctrl_clockwise = false;
@@ -239,9 +255,20 @@ static void test_motor(void)
     motor_ctrl_clockwise = true;
   }
 
+  /* shaft position */
+  shaft_position = motor_get_shaft_position();
+
   /* motor control */
   motor_ctrl(motor_ctrl_clockwise,
 	     motor_ctrl_duty);
+
+  u16_hexstr(hexstr, motor_ctrl_duty);
+  console_put("  duty:"); console_put(hexstr);
+
+  u16_hexstr(hexstr, shaft_position);
+  console_put("  shaft:"); console_put(hexstr);
+  u16_hexstr(hexstr, max_shaft_position);
+  console_put(" / "); console_putln(hexstr);
 }
 
 /*****************************************************************/

@@ -9,8 +9,8 @@
  *                                                                      *
  ************************************************************************/
 
-#include "console.h"
-#include "sam9l9260.h"
+#include "adc.h"
+#include "dbg.h"
 
 /****************************************************************************
  *               Global variables
@@ -19,7 +19,6 @@
 /****************************************************************************
  *               Function prototypes
  ****************************************************************************/
-void console_write_char(char c);
 
 /****************************************************************************
  *               Exported functions
@@ -27,28 +26,52 @@ void console_write_char(char c);
 
 /*****************************************************************/
 
-void console_initialize(void)
+void adc_initialize(void)
 {
-  /* initialize the debug port */
-  AT91C_BASE_DBGU->DBGU_CR = 0b0000000001010000;
-  AT91C_BASE_DBGU->DBGU_MR = 0b0000100000000000;
+  AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_ADC;  /* enable peripheral clock for ADC */
+
+  AT91C_BASE_PIOC->PIO_PDR = ADC_PIN_INPUT; /* enable peripheral control of AD0 (PC0)*/
+  AT91C_BASE_PIOC->PIO_ASR = ADC_PIN_INPUT; /* peripheral A selection*/
+
+  /* assumes MCK=100MHz (T=10ns)
+   * select ADC frequency = 2.5MHz (max 5MHz according to datasheet)
+   * Tadc = 0.4us
+   *
+   * ADCClock = MCK / ((PRESCAL+1) * 2) ==> PRESCAL=19
+   *
+   * Startup time = (STARTUP+1) * 8 * Tadc
+   * Startup time = 16us ==> STARTUP=4
+   *
+   * Sample&Hold = (SHTIM+1) * Tadc
+   * Sample&Hold = 10xTadc = 4us ==> SHTIM=9
+   */
+  AT91C_BASE_ADC->ADC_MR =
+    (19 <<  8)                  | /* PRESCAL=19             */
+    ( 4 << 16)                  | /* STARTUP=4              */
+    ( 9 << 24)                  | /* SHTIM=9                */
+    AT91C_ADC_LOWRES_10_BIT     | /* 10-bit resolution      */
+    AT91C_ADC_SLEEP_NORMAL_MODE | /* normal mode            */
+    AT91C_ADC_TRGEN_DIS;          /* conversion start by sw */
+  
+  AT91C_BASE_ADC->ADC_CHER = AT91C_ADC_CH0; /* enable ADC channel 0 (AD0) */
 }
 
 /*****************************************************************/
 
-void console_put(const char *str)
+uint16_t adc_get_value(void)
 {
-  for (int i = 0; str[i] != '\0'; i++) {
-    console_write_char(str[i]);
-  }
-}
+  /* start conversion */
+  AT91C_BASE_ADC->ADC_CR = AT91C_ADC_START;
 
-/*****************************************************************/
+  dbg_pin_on(DBG_PIN_1); // TBD: playing with ADC
 
-void console_putln(const char *str)
-{
-  console_put(str);
-  console_put("\n");
+  /* wait for conversion to complete (AD0) */
+  while ( !(AT91C_BASE_ADC->ADC_SR & AT91C_ADC_EOC0) ) {;}
+
+  dbg_pin_off(DBG_PIN_1);  // TBD: playing with ADC
+
+  /* read conversion result (AD0) */
+  return (uint16_t) (AT91C_BASE_ADC->ADC_CDR0 & 0x3ff);
 }
 
 /****************************************************************************
@@ -57,17 +80,3 @@ void console_putln(const char *str)
 
 /*****************************************************************/
 
-void console_write_char(char c)
-{
-  /* transmit one character on the debug port,
-   * wait for debug port to be ready to transmit
-   */
-  while (!(AT91C_BASE_DBGU->DBGU_CSR & AT91C_US_TXRDY));
-  AT91C_BASE_DBGU->DBGU_THR = c;
-
-  /* append carriage return to new line */
-  if (c == '\n') {
-    while ( !(AT91C_BASE_DBGU->DBGU_CSR & AT91C_US_TXRDY) );
-    AT91C_BASE_DBGU->DBGU_THR = '\r';
-  }
-}

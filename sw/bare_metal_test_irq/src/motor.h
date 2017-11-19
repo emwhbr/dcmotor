@@ -25,4 +25,8 @@ void motor_initialize();
 void motor_ctrl(bool clockwise,
 		uint16_t duty);
 
+uint16_t motor_get_shaft_position(void);
+
+uint16_t motor_shaft_max_position(void);
+
 #endif /* __MOTOR_H__ */

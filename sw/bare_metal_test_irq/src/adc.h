@@ -9,25 +9,18 @@
  *                                                                      *
  ************************************************************************/
 
-#ifndef __PWM_H__
-#define __PWM_H__
+#ifndef __ADC_H__
+#define __ADC_H__
 
 #include <stdint.h>
 
-/* PWM duty control values */
-#define PWM_DUTY_0   0x0000
-#define PWM_DUTY_1   0x028d
-#define PWM_DUTY_5   0x0ccc
-#define PWM_DUTY_10  0x1999
-#define PWM_DUTY_25  0x3fff
-#define PWM_DUTY_50  0x7fff
-#define PWM_DUTY_75  0xbfff
-#define PWM_DUTY_90  0xe665
-#define PWM_DUTY_99  0xfd6f
-#define PWM_DUTY_100 0xffff
+#include "sam9l9260.h"
 
-void pwm_initialize(void);
+/* ADC input pin */
+#define ADC_PIN_INPUT  AT91C_PC0_AD0 /* AD0 (PC0) */
 
-void pwm_set_duty(uint16_t duty_ctrl);
+void adc_initialize(void);
 
-#endif /* __PWM_H__ */
+uint16_t adc_get_value(void);
+
+#endif /* __ADC_H__ */

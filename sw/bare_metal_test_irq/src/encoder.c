@@ -89,10 +89,10 @@ int encoder_get_counter(void)
 
 /*****************************************************************/
 
-void encoder_get_gearbox_shaft(const int encoder_counter,
-			       bool *clockwise,
-			       int *rev,
-			       uint16_t *pos)
+void encoder_gearbox_shaft(const int encoder_counter,
+			   bool *positive,
+			   int *revolution,
+			   uint16_t *position)
 {
   float gearbox_rev;
   int gearbox_n_rev;
@@ -103,19 +103,46 @@ void encoder_get_gearbox_shaft(const int encoder_counter,
   gearbox_n_rev = (int) gearbox_rev;
   gearbox_part_rev = (gearbox_rev - gearbox_n_rev) * (ENCODER_CPR * ENCODER_GEAR);
 
-  /* return revolutions (rev) and part of
-   * revolution (pos) expressed as position 0 - (ENCODER_CPR * ENCODER_GEAR)
-   * clockwise indicates direction */
+  /* return revolutions (revolution) and part of
+   * revolution (position) expressed as position 0 - (ENCODER_CPR * ENCODER_GEAR)
+   * positive indicates the sign of revolution */
   if (gearbox_part_rev >= 0.0f) {
-    *clockwise = true;
+    *positive = true;
   }
   else {
-    *clockwise = false;
+    *positive = false;
     gearbox_n_rev *= -1.0;
     gearbox_part_rev *= -1.0f;
   }
-  *rev = gearbox_n_rev;
-  *pos = (uint16_t) gearbox_part_rev;
+  *revolution = gearbox_n_rev;
+  *position = (uint16_t) gearbox_part_rev;
+}
+
+/*****************************************************************/
+
+uint16_t encoder_get_gearbox_shaft_position(void)
+{
+  int encoder_counter;
+  bool positive;
+  int revolution;
+  uint16_t position;
+
+  /* read encoder */
+  encoder_counter = encoder_get_counter();
+
+  /* get gearbox output shaft position */
+  encoder_gearbox_shaft(encoder_counter,
+			&positive,
+			&revolution, /* dummy */
+			&position);
+
+  /* shaft position always positive relative zero */
+  if (!positive) {
+    position =
+      ( ENCODER_CPR * (uint16_t)ENCODER_GEAR ) - position;
+  }
+
+  return position;
 }
 
 /*****************************************************************/
