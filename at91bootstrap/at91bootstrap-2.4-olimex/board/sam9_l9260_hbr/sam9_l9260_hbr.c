@@ -84,6 +84,9 @@ void hw_init(void)
 	writel(AT91C_WDTC_WDDIS, AT91C_BASE_WDTC + WDTC_WDMR);
 
 	/* Configure the PIO controller and set initial state of the LEDs */
+	writel((1 << AT91C_ID_PIOA), PMC_PCER + AT91C_BASE_PMC);
+	writel((1 << AT91C_ID_PIOB), PMC_PCER + AT91C_BASE_PMC);
+	writel((1 << AT91C_ID_PIOC), PMC_PCER + AT91C_BASE_PMC);
 	pio_setup(hw_pio);
 
 	/* At this stage the main oscillator is supposed to be enabled

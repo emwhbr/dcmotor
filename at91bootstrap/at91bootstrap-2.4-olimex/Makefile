@@ -195,7 +195,6 @@ distrib:
 		| xargs -0 rm -f
 	find . -type f -name '*.lst' | xargs rm -f
 	rm -fr binaries
-	rm -fr result
 
 clean:
 	find . -type f \( -name .depend \
@@ -203,11 +202,12 @@ clean:
 		-o -name '*.elf' \
 		-o -name '*.map' \
 		-o -name '*.o' \
+                -o -name '*.lst' \
+                -o -name '*.dis' \
+                -o -name '*.bin' \
 		-o -name '*~' \) \
 		-print0 \
 		| xargs -0 rm -f
-	find . -name '*.lst' | xargs rm -f
-	rm -fr result
 
 tarball:	clean
 	F=`basename $(TOPDIR)` ; cd .. ; \

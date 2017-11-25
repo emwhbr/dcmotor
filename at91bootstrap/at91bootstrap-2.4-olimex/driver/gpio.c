@@ -150,7 +150,7 @@ static int pio_set_gpio_output(unsigned pin, int value)
 /*------------------------------------------------------------------------------*/
 static int pio_set_deglitch(unsigned pin, int is_on)
 {
-  /* EMWHBR : Not used, commented to save space
+  //  /* EMWHBR : Not used, commented to save space
 
 	unsigned	pio = pin_to_controller(pin);
 	unsigned	mask = pin_to_mask(pin);
@@ -158,7 +158,7 @@ static int pio_set_deglitch(unsigned pin, int is_on)
 	if (pio >= AT91C_NR_PIO)
 		return -EINVAL;
 	write_pio((is_on ? PIO_IFER(pio) : PIO_IFDR(pio)), mask);
-  */
+	//  */
 	return 0;
 }
 
@@ -209,8 +209,6 @@ int pio_get_value(unsigned pin)
 		return -EINVAL;
 	pdsr = read_pio(PIO_PDSR(pio));
 	return (pdsr & mask) != 0;
-
-        return 0;
 }
 
 /*------------------------------------------------------------------------------*/

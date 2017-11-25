@@ -1,6 +1,0 @@
-make CROSS_COMPILE=arm-unknown-linux-gnueabi- clean
-make CROSS_COMPILE=arm-unknown-linux-gnueabi- sam9_l9260_hbr_defconfig_nf
-make CROSS_COMPILE=arm-unknown-linux-gnueabi-
-arm-unknown-linux-gnueabi-objdump -S \
-result/sam9_l9260_hbr-nandflashboot-2.4.elf > \
-result/sam9_l9260_hbr-nandflashboot-2.4.dis

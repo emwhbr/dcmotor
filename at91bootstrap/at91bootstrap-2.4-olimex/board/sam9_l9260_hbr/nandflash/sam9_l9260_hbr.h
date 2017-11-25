@@ -212,9 +212,11 @@
 
 #define BOOT_MODE_UBOOT   0
 #define BOOT_MODE_KERNEL  1
+#define BOOT_MODE_BM      2  /* bare-metal (BM) */
 
 #define IMG_ADDR_UBOOT    0x1CF00000	/* U-Boot Address in NandFlash */
 #define IMG_ADDR_KERNEL   0x1D300000    /* Kernel Address in NandFlash */
+#define IMG_ADDR_BM       0x00020000    /* BM Address in NandFlash */
 
 #ifndef CONFIG_FASTBOOT
 #define IMG_SIZE_UBOOT    0x0E0000      /* Normal: U-Boot Size in NandFlash (896KB) */
@@ -224,9 +226,11 @@
 #define IMG_SIZE_KERNEL   0x219800      /* Fastboot: Kernel Size in NandFlash (2.2MB) 
 					 * Must be multiple of 2K */
 #endif
+#define IMG_SIZE_BM       0x020000      /* Normal or Fastboot: BM Size in NandFlash (128KB)*/
 
 #define JUMP_ADDR_UBOOT   0x23F00000	/* Final Jump Address SDRAM (U-Boot) */
 #define JUMP_ADDR_KERNEL  0x20008000	/* Final Jump Address SDRAM (Kernel) */
+#define JUMP_ADDR_BM      0x22200000	/* Final Jump Address SDRAM (BM)     */
 
 #define UBOOT_HEADER_SIZE  0x40         /* Compensate for U-Boot header:
 					 * 0x20008000-40 = 0x20007FC0,
@@ -252,7 +256,7 @@
 #ifndef CONFIG_FASTBOOT
 #define AT91_BOOTSTRAP_VER "HBR-V8NF-Normal  "
 #else
-#define AT91_BOOTSTRAP_VER "HBR-V8NF-Fast    "
+#define AT91_BOOTSTRAP_VER "HBR-V8NF-Fast-BM1"
 #endif
 
 #endif	/* _SAM9_L9260_HBR_H */

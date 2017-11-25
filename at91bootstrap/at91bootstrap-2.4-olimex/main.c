@@ -61,13 +61,15 @@ int main(void)
 
 	/* Check if BUT is pressed */
 	if ( pio_get_value(AT91C_PIN_PC(15)) ) {
-	  /* Jump directly to kernel and bypass U-Boot */
-	  boot_mode = BOOT_MODE_KERNEL;
-	  img_addr  = IMG_ADDR_KERNEL;
-	  img_size  = IMG_SIZE_KERNEL;
-	  img_dest  = JUMP_ADDR_KERNEL - UBOOT_HEADER_SIZE;
+	  dbg_print("Load BM\r\n");
+	  /* Jump directly to bare-metal application, bypass U-Boot */
+	  boot_mode = BOOT_MODE_BM;
+	  img_addr  = IMG_ADDR_BM;
+	  img_size  = IMG_SIZE_BM;
+	  img_dest  = JUMP_ADDR_BM;
 	}
 	else {
+	  dbg_print("Load U-Boot\r\n");
 	  /* U-Boot requested (BUT is pressed) */
 	  boot_mode = BOOT_MODE_UBOOT;
 	  img_addr  = IMG_ADDR_UBOOT;
@@ -91,7 +93,7 @@ int main(void)
 	  /* Start U-Boot */
 	  return img_dest;
 	}
-	else {
+	else if (boot_mode == BOOT_MODE_KERNEL) {
 	  dbg_print("Kernel@[");
 	  dbg_print_hex(img_dest + UBOOT_HEADER_SIZE);
 	  dbg_print("]\r\n");
@@ -119,7 +121,15 @@ int main(void)
 	  /* Start kernel, assumes parameters are compiled into kernel image */
 	  //return (img_dest + UBOOT_HEADER_SIZE);
 	}
+	else {
+	  dbg_print("BM@[");
+	  dbg_print_hex(img_dest);
+	  dbg_print("]\r\n");
 
+	  /* Start BM */
+	  return img_dest;
+	}
+	
 load_failed:
 	pio_set_value(AT91C_PIN_PA(9), 1); /* PWR_LED (yellow) On */
 	dbg_print("\r\nLoad error\r\n");
