@@ -37,9 +37,8 @@
 #include "include/part.h"
 #include "include/main.h"
 #include "include/debug.h"
-#include "include/dataflash.h"
-#include "include/flash.h"
 #include "include/nandflash.h"
+#include "include/gpio.h"
 
 /*------------------------------------------------------------------------------*/
 /* Function Name       : main							*/
@@ -49,47 +48,82 @@
 /*------------------------------------------------------------------------------*/
 int main(void)
 {
+  unsigned char boot_mode;
+  unsigned int img_addr, img_size, img_dest;
+  volatile unsigned int *p_kernel_params = (unsigned int *) KERNEL_PARAM_START_ADDR;
 
 /* ================== 1st step: Hardware Initialization ================= */
+
 	/* Performs the hardware initialization */
-#ifdef CFG_HW_INIT
 	hw_init();
-#endif
 
 /* ==================== 2nd step: Load from media ==================== */
-	/* Load from Dataflash in RAM */
-#ifdef CFG_DATAFLASH
-	load_df(AT91C_SPI_PCS_DATAFLASH, IMG_ADDRESS, IMG_SIZE, JUMP_ADDR);
-#endif
-#ifdef CFG_FLASH
-	load_flash(IMG_ADDRESS, IMG_SIZE, JUMP_ADDR);
-	dbg_print(">Flash ready\r\n");
-#endif
 
-	/* Load from Nandflash in RAM */
-#ifdef CFG_NANDFLASH
-	load_nandflash(IMG_ADDRESS, IMG_SIZE, JUMP_ADDR);
-	dbg_print(">NANDflash ready\r\n");
-#endif
+	/* Check if BUT is pressed */
+	if ( pio_get_value(AT91C_PIN_PC(15)) ) {
+	  /* Jump directly to kernel and bypass U-Boot */
+	  boot_mode = BOOT_MODE_KERNEL;
+	  img_addr  = IMG_ADDR_KERNEL;
+	  img_size  = IMG_SIZE_KERNEL;
+	  img_dest  = JUMP_ADDR_KERNEL - UBOOT_HEADER_SIZE;
+	}
+	else {
+	  /* U-Boot requested (BUT is pressed) */
+	  boot_mode = BOOT_MODE_UBOOT;
+	  img_addr  = IMG_ADDR_UBOOT;
+	  img_size  = IMG_SIZE_UBOOT;
+	  img_dest  = JUMP_ADDR_UBOOT;
+	}
+	
+	/* Load from Nandflash to SDRAM */
+	if ( load_nandflash(img_addr, img_size, img_dest) ) {
+	    goto load_failed;
+	}
 
-/* ==================== 3rd step:  Process the Image =================== */
-	/* Uncompress the image */
-#ifdef GUNZIP
-	decompress_image((void *)IMG_ADDRESS, (void *)JUMP_ADDR, IMG_SIZE);
-	/* NOT IMPLEMENTED YET */
-	dbg_print(">Decompress ready\r\n");
-#endif /* GUNZIP */
+/* ==================== 3th step: Start the application =================== */	
 
-/* ==================== 4th step: Start the application =================== */
-	/* Set linux arguments */
-#ifdef LINUX_ARG
-	linux_arg(LINUX_ARG);	/* NOT IMPLEMENTED YET */
-	dbg_print(">Linux ready\r\n");
-#endif /* LINUX_ARG */
-	dbg_print(">Start application at [");
-	dbg_print_hex(JUMP_ADDR);
-	dbg_print("]\r\n");
-	{ volatile unsigned int loop; for(loop = 200000; loop > 0; loop--);}
 	/* Jump to the Image Address */
-	return JUMP_ADDR;
+	if (boot_mode == BOOT_MODE_UBOOT) {
+	  dbg_print("U-Boot@[");
+	  dbg_print_hex(img_dest);
+	  dbg_print("]\r\n");
+
+	  /* Start U-Boot */
+	  return img_dest;
+	}
+	else {
+	  dbg_print("Kernel@[");
+	  dbg_print_hex(img_dest + UBOOT_HEADER_SIZE);
+	  dbg_print("]\r\n");
+
+	  /* Make sure any previous kernel parameter list,
+	   * passed by U-Boot is destroyed. This will force
+	   * kernel to use its built-in parameters. */
+
+	  /* Create an empty tagged list */
+	  *p_kernel_params++ = 0x2;
+	  *p_kernel_params++ = 0x54410001; /* ATAG_CORE */
+	  *p_kernel_params++ = 0x0;
+	  *p_kernel_params   = 0x0;        /* ATAG_NONE */
+	  
+	  /* Prepare jump to kernel startup entry point 
+	   * See kernel source arch/arm/kernel/head.S */
+	  asm volatile("mov    r0, #0");           /* r0 = 0             */
+	  asm volatile("ldr    r1, =1501");        /* r1 = machine nr    */
+	  asm volatile("ldr    r2, =0x20000000");  /* r2 = atags pointer */
+
+	  /* Start kernel, assumes parameters are compiled into kernel image */
+	  asm volatile("ldr    r3, =0x20008000");
+	  asm volatile("bx     r3");
+
+	  /* Start kernel, assumes parameters are compiled into kernel image */
+	  //return (img_dest + UBOOT_HEADER_SIZE);
+	}
+
+load_failed:
+	pio_set_value(AT91C_PIN_PA(9), 1); /* PWR_LED (yellow) On */
+	dbg_print("\r\nLoad error\r\n");
+	while(1) {
+	  ;
+	}
 }

@@ -6,7 +6,7 @@ SIZE=$(CROSS_COMPILE)size
 OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
 
-TOPDIR	:=	$(CURDIR)
+TOPDIR:=$(shell pwd)
 
 VERSION:=2.4
 
@@ -61,6 +61,7 @@ OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
 INCL=board/$(BOARD)/$(PROJECT)
 
 CPPFLAGS=-g -mcpu=arm9 -Os -Wall -D$(TARGET)		\
+	-Wa,-adhls=$@.lst \
 	-I$(INCL) -Iinclude				\
 	-DTOP_OF_MEM=$(TOP_OF_MEMORY) 			\
 	-D$(SPI_MODE) -D$(SPI_BOOT) -DSPI_CLK=$(SPI_CLK) \
@@ -88,6 +89,8 @@ result/$(BOOT_NAME).elf: $(OBJS)
 	mkdir -p result
 	echo $(CONFIG_DATAFLASH) $(COBJS-y)
 	$(LD) $(LDFLAGS) -n -o result/$(BOOT_NAME).elf $(OBJS)
+	$(OBJDUMP) -S result/$(BOOT_NAME).elf > result/$(BOOT_NAME).dis
+	find . -type f -name '*.lst' | xargs -I xxx cp xxx result/
 
 binaries/$(BOOT_NAME).bin: result/$(BOOT_NAME).elf
 	mkdir -p binaries
@@ -119,6 +122,26 @@ sam9_l9260_defconfig:	clean
 	echo	BOARD=sam9_l9260		>>	.config
 	echo	PROJECT=$(MEMORY)		>>	.config
 	echo	CONFIG_$(CFG_MEMORY)=y		>>	.config
+	echo	SPI_MODE=$(CONFIG_SPI_MODE)	>>	.config
+	echo	SPI_BOOT=SPI_BOOT_CS1		>>	.config
+	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
+
+# DataFlash
+sam9_l9260_hbr_defconfig_df:	clean
+	echo	BOARDNAME=sam9_l9260_hbr	>	.config
+	echo	BOARD=sam9_l9260_hbr		>>	.config
+	echo	PROJECT=dataflash		>>	.config
+	echo	CONFIG_DATAFLASH=y		>>	.config
+	echo	SPI_MODE=$(CONFIG_SPI_MODE)	>>	.config
+	echo	SPI_BOOT=SPI_BOOT_CS1		>>	.config
+	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
+
+# NandFlash
+sam9_l9260_hbr_defconfig_nf:	clean
+	echo	BOARDNAME=sam9_l9260_hbr	>	.config
+	echo	BOARD=sam9_l9260_hbr		>>	.config
+	echo	PROJECT=nandflash		>>	.config
+	echo	CONFIG_NANDFLASH=y		>>	.config
 	echo	SPI_MODE=$(CONFIG_SPI_MODE)	>>	.config
 	echo	SPI_BOOT=SPI_BOOT_CS1		>>	.config
 	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
@@ -159,19 +182,6 @@ at91sam9263ek_defconfig:	clean
 	echo	SPI_BOOT=SPI_BOOT_CS0		>>	.config
 	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
 
-../buildroot:
-	(cd .. ; svn co svn://uclibc.org/trunk/buildroot)
-
-../buildroot/.config:	../buildroot
-	cp buildroot.config $@
-	make -C ../buildroot menuconfig
-
-toolchain:	../buildroot/.config
-	make -C ../buildroot
-
-#	echo $PCK 1  $(PCK) 2  ${PCK} 3 $$PCK 4  $$(PCK) 5  $${PCK}  )
-	
-#	cd .. ; tar -cvf `basename $$(TOPDIR)`.tar `basename $$(TOPDIR)` ; bzip2 `basename $$(TOPDIR)`.tar )
 
 distrib:
 	find . -type f \( -name .depend \
@@ -183,6 +193,7 @@ distrib:
 		-o -name '*~' \) \
 		-print0 \
 		| xargs -0 rm -f
+	find . -type f -name '*.lst' | xargs rm -f
 	rm -fr binaries
 	rm -fr result
 
@@ -195,6 +206,7 @@ clean:
 		-o -name '*~' \) \
 		-print0 \
 		| xargs -0 rm -f
+	find . -name '*.lst' | xargs rm -f
 	rm -fr result
 
 tarball:	clean

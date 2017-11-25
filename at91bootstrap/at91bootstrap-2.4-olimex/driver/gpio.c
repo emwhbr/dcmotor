@@ -150,12 +150,15 @@ static int pio_set_gpio_output(unsigned pin, int value)
 /*------------------------------------------------------------------------------*/
 static int pio_set_deglitch(unsigned pin, int is_on)
 {
+  /* EMWHBR : Not used, commented to save space
+
 	unsigned	pio = pin_to_controller(pin);
 	unsigned	mask = pin_to_mask(pin);
 
 	if (pio >= AT91C_NR_PIO)
 		return -EINVAL;
 	write_pio((is_on ? PIO_IFER(pio) : PIO_IFDR(pio)), mask);
+  */
 	return 0;
 }
 
@@ -206,45 +209,49 @@ int pio_get_value(unsigned pin)
 		return -EINVAL;
 	pdsr = read_pio(PIO_PDSR(pio));
 	return (pdsr & mask) != 0;
+
+        return 0;
 }
 
 /*------------------------------------------------------------------------------*/
 /* \fn    pio_device_pio_setup							*/
 /* \brief Configure PIO in periph mode according to the platform informations	*/
 /*------------------------------------------------------------------------------*/
-int pio_setup (const struct pio_desc *pio_desc)
+void pio_setup (const struct pio_desc *pio_desc)
 {
-        unsigned        pio, pin = 0;
+  unsigned char i;
+  
+  /* Sets all the pio muxing of the corresponding device as 
+   * defined in its platform_data struct.
+   *
+   * NOTE! (EMWHBR) : - Rewritten to shrink size of the final bin-file
+   *                  - Not supporting PIO_PERIPH_B
+   */
+  for (i=0; i < NR_HW_PIO_PINS; i++) {
 
-        if(!pio_desc) {
-                return 0;
-        }
+    switch (pio_desc[i].type) {
 
-        /* Sets all the pio muxing of the corresponding device as defined in its platform_data struct */
-        while (pio_desc->pin_name) {
-                pio = pin_to_controller( pio_desc->pin_num);
-                if (pio >= AT91C_NR_PIO)
-                		return 0;
-                else if (pio_desc->type == PIO_PERIPH_A)
-                        pio_set_A_periph(pio_desc->pin_num,
-                                (pio_desc->attribute & PIO_PULLUP) ? 1 : 0);
-                else if (pio_desc->type == PIO_PERIPH_B)
-                        pio_set_B_periph(pio_desc->pin_num,
-                                (pio_desc->attribute & PIO_PULLUP) ? 1 : 0);
-                else if (pio_desc->type == PIO_INPUT) {
-                        pio_set_deglitch(pio_desc->pin_num,
-                                (pio_desc->attribute & PIO_DEGLITCH)? 1 : 0);
-                        pio_set_gpio_input(pio_desc->pin_num,
-                                (pio_desc->attribute & PIO_PULLUP) ? 1 : 0);
-                }
-                else if(pio_desc->type == PIO_OUTPUT) {
-                        pio_set_multi_drive(pio_desc->pin_num, (pio_desc->attribute & PIO_OPENDRAIN) ? 1 : 0);
-                        pio_set_gpio_output(pio_desc->pin_num, pio_desc->dft_value);
-                }
-                else
-                         return 0;
-                ++pin;
-                ++pio_desc;
-        }
-        return pin;
+    case PIO_PERIPH_A:
+      pio_set_A_periph(pio_desc[i].pin_num,
+		       (pio_desc[i].attribute & PIO_PULLUP) ? 1 : 0);
+      break;
+    case PIO_PERIPH_B:
+      /*
+      pio_set_B_periph(pio_desc[i].pin_num,
+		       (pio_desc[i].attribute & PIO_PULLUP) ? 1 : 0);
+      */
+      break;
+    case PIO_INPUT:
+      pio_set_deglitch(pio_desc[i].pin_num,
+		       (pio_desc[i].attribute & PIO_DEGLITCH)? 1 : 0);
+      pio_set_gpio_input(pio_desc[i].pin_num,
+			 (pio_desc[i].attribute & PIO_PULLUP) ? 1 : 0);
+      break;
+    case PIO_OUTPUT:
+      pio_set_multi_drive(pio_desc[i].pin_num, (pio_desc[i].attribute & PIO_OPENDRAIN) ? 1 : 0);
+      pio_set_gpio_output(pio_desc[i].pin_num, pio_desc[i].dft_value);
+      break;
+
+    }
+  }
 }

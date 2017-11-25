@@ -40,11 +40,18 @@
 #include "../include/nandflash.h"
 
 /* Supported NandFlash devices */
-static struct SNandInitInfo NandFlash_InitInfo[] = {
-	{0xecda, 0x800, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F2G08U0M 8bit 256Mb\0"},
-	{0x2cca, 0x800, 0x20000, 0x800, 0x40, 0x1, "Micron MT29F2G16AAB 16bit 256Mb\0"},	
-	{0xecdc, 0x1000, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F4G08U0M 8bit 256Mb\0"},
-	{0,}
+// EMWHBR: Redefined to shrink size of the final bin-file
+//static struct SNandInitInfo NandFlash_InitInfo[] = {
+///* EMWHBR : Remove devices to shrink size of the final bin-file
+//	{0xecda, 0x800, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F2G08U0M 8bit 256Mb\0"},
+//	{0x2cca, 0x800, 0x20000, 0x800, 0x40, 0x1, "Micron MT29F2G16AAB 16bit 256Mb\0"},
+//*/
+//	{0xecdc, 0x1000, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F4G08U0M 8bit 256Mb\0"},
+//	{0,}
+//};
+
+static struct SNandInitInfo NandFlash_InitInfo = {
+  0xecdc, 0x1000, 0x20000, 0x800, 0x40, 0x0 /* "Samsung K9F4G08U0M 8bit 256Mb\0" */
 };
 
 #endif

@@ -75,23 +75,23 @@ static void AT91F_NandInit(PSNandInfo pNandInfo, PSNandInitInfo pNandInitInfo)
 	pNandInfo->uBlockNbData	  = pNandInitInfo->uNandBlockSize;	/* Nb of DataBytes in a block */
 	pNandInfo->uDataNbBytes	  = pNandInitInfo->uNandSectorSize;	/* Nb of bytes in data section */
 	pNandInfo->uSpareNbBytes  = pNandInitInfo->uNandSpareSize;	/* Nb of bytes in spare section */
-	pNandInfo->uSectorNbBytes = pNandInfo->uDataNbBytes +
-								pNandInfo->uSpareNbBytes;	/* Total nb of bytes in a sector */
+	pNandInfo->uSectorNbBytes = pNandInfo->uDataNbBytes + 
+                                    pNandInfo->uSpareNbBytes;	        /* Total nb of bytes in a sector */
 
 	result = udiv(pNandInfo->uBlockNbData,pNandInfo->uDataNbBytes);
 	if(result.rem != 0) result.quot++;
 	pNandInfo->uBlockNbSectors = result.quot;		/* Nb of sector in a block */
-	pNandInfo->uBlockNbSpares = pNandInfo->uSpareNbBytes * pNandInfo->uBlockNbSectors;	/* Nb of SpareBytes in a block */
-	pNandInfo->uBlockNbBytes = pNandInfo->uSectorNbBytes * pNandInfo->uBlockNbSectors;	/* Total nb of bytes in a block */
+	pNandInfo->uBlockNbSpares = pNandInfo->uSpareNbBytes * 
+                                    pNandInfo->uBlockNbSectors;	/* Nb of SpareBytes in a block */
+	pNandInfo->uBlockNbBytes  = pNandInfo->uSectorNbBytes * 
+                                    pNandInfo->uBlockNbSectors;	/* Total nb of bytes in a block */
 
 	pNandInfo->uNbSectors = pNandInfo->uBlockNbSectors * pNandInfo->uNbBlocks;	/* Total nb of sectors in device */
-	pNandInfo->uNbData = pNandInfo->uBlockNbBytes * pNandInfo->uNbBlocks;		/* Nb of DataBytes in device */
-	pNandInfo->uNbSpares = pNandInfo->uBlockNbSpares * pNandInfo->uNbBlocks;	/* Nb of SpareBytes in device */
-	pNandInfo->uNbBytes	= pNandInfo->uNbData + pNandInfo->uNbSpares;		/* Total nb of bytes in device */
-
+	pNandInfo->uNbData    = pNandInfo->uBlockNbBytes * pNandInfo->uNbBlocks;	/* Nb of DataBytes in device */
+	pNandInfo->uNbSpares  = pNandInfo->uBlockNbSpares * pNandInfo->uNbBlocks;	/* Nb of SpareBytes in device */
+	pNandInfo->uNbBytes   = pNandInfo->uNbData + pNandInfo->uNbSpares;		/* Total nb of bytes in device */
 	pNandInfo->uDataBusWidth = pNandInitInfo->uNandBusWidth;			/* Data Bus Width (8/16 bits) */
-	
-	
+		
 	uSectorSize = pNandInfo->uDataNbBytes - 1;
 	pNandInfo->uOffset = 0;
 
@@ -108,7 +108,7 @@ static void AT91F_NandInit(PSNandInfo pNandInfo, PSNandInitInfo pNandInitInfo)
 /*------------------------------------------------------------------------------*/
 static PSNandInitInfo AT91F_NandReadID(void)
 {
-	unsigned int uChipID, i=0;
+	unsigned int uChipID;
 	unsigned char bManufacturerID, bDeviceID;
 	
 	/* Enable chipset */
@@ -128,61 +128,20 @@ static PSNandInitInfo AT91F_NandReadID(void)
 	uChipID = (bManufacturerID << 8) | bDeviceID;
 	
 	/* Search in NandFlash_InitInfo[] */
-	while (NandFlash_InitInfo[i].uNandID != 0)
-	{
-		if (NandFlash_InitInfo[i].uNandID == uChipID)
-			return &NandFlash_InitInfo[i];	
-	
-		i++;
+	// EMWHBR: Redefined to shrink size of the final bin-file
+	//while (NandFlash_InitInfo[i].uNandID != 0)
+	//{
+	//	if (NandFlash_InitInfo[i].uNandID == uChipID)
+	//		return &NandFlash_InitInfo[i];	
+	//
+	//	i++;
+	//}
+	if (NandFlash_InitInfo.uNandID == uChipID) {
+	  return &NandFlash_InitInfo;
 	}
 	
 	return 0;
 }
-
-/*------------------------------------------------------------------------------*/
-/* \fn    AT91F_NandEraseBlock0							*/
-/* \brief Erase Block 0								*/
-/*------------------------------------------------------------------------------*/
-BOOL AT91F_NandEraseBlock0(void)
-{
-	unsigned int uPhySecNb = 0;
-	BOOL bRet = TRUE;
-
-	/* Chip enable */
-	NAND_ENABLE_CE();
-
-	/* Push Erase_1 command */
-	WRITE_NAND_COMMAND(CMD_ERASE_1);
-
-	/* Push sector address in three cycles */
-	WRITE_NAND_ADDRESS((uPhySecNb >>  0) & 0xFF);
-	WRITE_NAND_ADDRESS((uPhySecNb >>  8) & 0xFF);
-	WRITE_NAND_ADDRESS((uPhySecNb >> 16) & 0xFF);
-
-	/* Push Erase_2 command */
-	WRITE_NAND_COMMAND(CMD_ERASE_2);
-
-	/* Wait for nand to be ready */
-	NAND_WAIT_READY();
-	NAND_WAIT_READY();
-	
-	/* Check status bit for error notification */
-	WRITE_NAND_COMMAND(CMD_STATUS);
-	NAND_WAIT_READY();
-	if (READ_NAND() & STATUS_ERROR)
-	{
-		/* Error during block erasing */
-		bRet = FALSE;
-		goto exit;	
-	}
-
-exit:
-	/* Chip disable */
-	NAND_DISABLE_CE();
-
-	return bRet;
-}
-
 
 #ifdef NANDFLASH_SMALL_BLOCKS
 /*------------------------------------------------------------------------------*/
@@ -237,7 +196,7 @@ BOOL AT91F_NandReadSector(PSNandInfo pNandInfo, unsigned int uSectorAddr, char *
 	NAND_WAIT_READY();
 	NAND_WAIT_READY();	/* Need to be done twice, READY detected too early the first time? */
 	
-	/* Read loop */
+	/* Read loop */	
 	if (pNandInfo->uDataBusWidth)
 	{	/* 16 bits */
 		for(i=0; i<uBytesToRead/2; i++) // Div2 because of 16bits
@@ -325,18 +284,22 @@ static BOOL AT91F_NandReadSector(PSNandInfo pNandInfo, unsigned int uSectorAddr,
 	NAND_WAIT_READY();	/* Need to be done twice, READY detected too early the first time? */
 	
 	/* Read loop */
-	if (pNandInfo->uDataBusWidth)
-	{	/* 16 bits */
-		for(i=0; i<uBytesToRead/2; i++) /* Div2 because of 16bits */
-		{
-			*((short*)pOutBuffer) = READ_NAND16();
-			pOutBuffer+=2;
-		}
-	} else {
-		for(i=0; i<uBytesToRead; i++)
-		{
-			*pOutBuffer++ = READ_NAND();
-		}
+	// EMWHBR: We know that we are using 8-bit
+	//if (pNandInfo->uDataBusWidth)
+	//{	/* 16 bits */
+	//	for(i=0; i<uBytesToRead/2; i++) /* Div2 because of 16bits */
+	//	{
+	//		*((short*)pOutBuffer) = READ_NAND16();
+	//		pOutBuffer+=2;
+	//	}
+	//} else {
+	//	for(i=0; i<uBytesToRead; i++)
+	//	{
+	//		*pOutBuffer++ = READ_NAND();
+	//	}
+	//}
+	for (i=0; i<uBytesToRead; i++) {
+	  *pOutBuffer++ = READ_NAND();
 	}
 
 exit:
@@ -351,10 +314,14 @@ exit:
 /* \fn    AT91F_NandRead							*/
 /* \brief Read Sector Algorithm							*/
 /*------------------------------------------------------------------------------*/
-static BOOL AT91F_NandRead(PSNandInfo pNandInfo, unsigned int uBlockNb, unsigned int uSectorNb, unsigned int uSpareValue, char *pOutBuffer)
+static BOOL AT91F_NandRead(PSNandInfo pNandInfo,
+			   unsigned int uBlockNb, unsigned int uSectorNb,
+			   unsigned int uSpareValue,
+			   char *pOutBuffer)
 {
 	PSSectorInfo pSectorInfo;
 	unsigned int uSectorAddr = uBlockNb * pNandInfo->uBlockNbData + uSectorNb * pNandInfo->uDataNbBytes;
+
 
 	/* If uSectorNb = 0 -> First sector of the Block so read Spare bytes */
 	if (!uSectorNb)
@@ -364,7 +331,7 @@ static BOOL AT91F_NandRead(PSNandInfo pNandInfo, unsigned int uBlockNb, unsigned
 		pSectorInfo = (PSSectorInfo)&pOutBuffer[pNandInfo->uDataNbBytes];
 		if (pSectorInfo->bBadBlock != 0xFF)
 		{
-			return FALSE;
+		  return FALSE;
 		}
 		
 		/* Read Second Page Spare zone */
@@ -372,7 +339,7 @@ static BOOL AT91F_NandRead(PSNandInfo pNandInfo, unsigned int uBlockNb, unsigned
 		pSectorInfo = (PSSectorInfo)&pOutBuffer[pNandInfo->uDataNbBytes];
 		if (pSectorInfo->bBadBlock != 0xFF)
 		{
-			return FALSE;
+		  return FALSE;
 		}	
 	}
 
@@ -388,8 +355,15 @@ int load_nandflash(unsigned int img_addr, unsigned int img_size, unsigned int im
 	SNandInfo sNandInfo;
 	PSNandInitInfo pNandInitInfo;
 	unsigned char *pOutBuffer = (unsigned char*)img_dest;
-	unsigned int blockIdx, badBlock, blockRead, length, sizeToRead, nbSector, newBlock, sectorIdx, blockError, sectorSize;
-	div_t		blocks;
+	unsigned int blockIdx, length, sizeToRead, nbSector, sectorIdx;
+	div_t	     blocks;
+
+	dbg_print("NAND[");
+	dbg_print_hex(img_addr);
+	dbg_print("] to SDRAM[");
+	dbg_print_hex(img_dest);
+	dbg_print("]\r\n");
+
 	nandflash_hw_init();
 	
 	/* Read Nand Chip ID */
@@ -398,7 +372,7 @@ int load_nandflash(unsigned int img_addr, unsigned int img_size, unsigned int im
 	if (!pNandInitInfo)
  	{
 #ifdef CFG_DEBUG	
-	   	dbg_print("\n\r-E- No NandFlash detected !!!\n\r");
+	   	dbg_print("\n\rNo NAND\n\r");
 #endif
 		return -1;
     	}
@@ -406,20 +380,21 @@ int load_nandflash(unsigned int img_addr, unsigned int img_size, unsigned int im
 	/* Initialize NandInfo Structure */
 	AT91F_NandInit(&sNandInfo, pNandInitInfo);
 
-	if (sNandInfo.uDataBusWidth)
-		nandflash_cfg_16bits_dbw_init();
+	// EMWHBR: NAND data bus width is 8 bits, removed to shrink size of the final bin-file
+	//if (sNandInfo.uDataBusWidth) {
+	//  nandflash_cfg_16bits_dbw_init();
+	//}
 
     	/* Initialize the block offset */
     	blocks = udiv(img_addr , sNandInfo.uBlockNbData);
     	blockIdx = blocks.quot;
-	/* Initialize the number of bad blocks */
-    	badBlock = 0;
-	blockRead = 0;
     
 	length = img_size;
     
 	while (length > 0)
 	{
+	        dbg_print(".");
+
         	/* Read a buffer corresponding to a block in the origin file */
 		if (length < sNandInfo.uBlockNbData)
 		{
@@ -438,49 +413,28 @@ int load_nandflash(unsigned int img_addr, unsigned int img_size, unsigned int im
             		nbSector++;
         	}
 
-        	newBlock = 1;
-		/* Loop until a valid block has been read */
-		while (newBlock == 1)
-		{
-			/* Reset the error flag */
-			blockError = 0;
-            
-			/* Read the sectors */
-			for (sectorIdx=0; (sectorIdx < nbSector) && (blockError == 0); sectorIdx++)
-			{
-				sectorSize = sizeToRead - (sectorIdx * sNandInfo.uDataNbBytes);
-				if (sectorSize < sNandInfo.uDataNbBytes)
-				{
-					sectorSize = sizeToRead - (sectorIdx * sNandInfo.uDataNbBytes);
-				}
-				else
-				{
-					sectorSize = sNandInfo.uDataNbBytes;
-				}
+		/* Read the sectors in one block */
+		for (sectorIdx=0; (sectorIdx < nbSector); sectorIdx++) {
 
-	                	/* Read the sector */
-        	        	if (AT91F_NandRead(&sNandInfo, blockIdx, sectorIdx, ZONE_DATA, pOutBuffer) == FALSE)
-				{
-					blockError = 1;
-				}
-				else
-				{
-					pOutBuffer+=sNandInfo.uDataNbBytes;
-				}
-			}
-            
-			if (blockError == 0)
-			{
-                		/* If the block is valid exit */
-	                	newBlock = 0;
-        	    	}
-			blockIdx++;
+		  if (AT91F_NandRead(&sNandInfo, blockIdx, sectorIdx, ZONE_DATA, (char *)pOutBuffer) == FALSE) {
+#ifdef CFG_DEBUG	
+		    dbg_print("\n\rError sector\n\r");
+#endif
+		    return -1;
+		  }
+		  pOutBuffer+=sNandInfo.uDataNbBytes;
 		}
+		
+		/* Increment block */
+		blockIdx++;
 
         	/* Decrement length */
 	        length -= sizeToRead;
-		blockRead++;
 	}
+
+	dbg_print("\r\nDone[");
+	dbg_print_hex(img_size);
+	dbg_print("]\r\n");
 
 	return 0;
 }

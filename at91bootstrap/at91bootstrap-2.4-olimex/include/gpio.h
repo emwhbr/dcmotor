@@ -50,12 +50,19 @@ enum  pio_type {
 #define PIO_DEGLITCH  (1 << 1)
 #define PIO_OPENDRAIN (1 << 2)
 
+// EMWHBR: Redefined to shrink size of the final bin-file
+//struct pio_desc {
+//	const char *pin_name;   /* Pin Name */
+//	unsigned int pin_num;   /* Pin number */
+//	unsigned int dft_value; /* Default value for outputs */
+//	unsigned char attribute;
+//	enum pio_type type;
+//};
 struct pio_desc {
-	const char *pin_name;   /* Pin Name */
-	unsigned int pin_num;   /* Pin number */
-	unsigned int dft_value; /* Default value for outputs */
-	unsigned char attribute;
-	enum pio_type type;
+	unsigned int   pin_num;   /* Pin number */
+	unsigned int   dft_value; /* Default value for outputs */
+	unsigned char  attribute;
+	enum pio_type   type;
 };
 
 /* pio_set_value: assuming the pin is muxed as a gpio output, set its value. */
@@ -64,7 +71,7 @@ extern int pio_set_value(unsigned pin, int value);
  * !!! PIO Clock must be enabled in the PMC !!! */
 extern int pio_get_value(unsigned pin);
 /* pio_device_pio_setup: Configure PIO in periph mode according to the platform informations */
-extern int pio_setup (const struct pio_desc *pio_desc);
+extern void pio_setup (const struct pio_desc *pio_desc);
 
 /* these pin numbers double as IRQ numbers, like AT91C_ID_* values */
 #define PIO_NB_IO		32 /* Number of IO handled by one PIO controller */

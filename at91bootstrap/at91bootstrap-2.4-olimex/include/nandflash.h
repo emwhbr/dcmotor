@@ -37,6 +37,17 @@
 #ifndef _NANDFLASH_H
 #define _NANDFLASH_H
 
+// EMWHBR: Redefined to shrink size of the final bin-file
+//typedef struct SNandInitInfo
+//{
+//	unsigned int uNandID		; /* Nand Chip ID */
+//	unsigned int uNandNbBlocks	;	
+//	unsigned int uNandBlockSize	;
+//	unsigned int uNandSectorSize	;
+//	unsigned int uNandSpareSize	;
+//	unsigned int uNandBusWidth	;
+//	char 	     name[40]		; /* Nand Name */
+//} SNandInitInfo, *PSNandInitInfo;
 typedef struct SNandInitInfo
 {
 	unsigned int uNandID		; /* Nand Chip ID */
@@ -45,7 +56,6 @@ typedef struct SNandInitInfo
 	unsigned int uNandSectorSize	;
 	unsigned int uNandSpareSize	;
 	unsigned int uNandBusWidth	;
-	char 	     name[40]		; /* Nand Name */
 } SNandInitInfo, *PSNandInitInfo;
 
 /* Group all usefull sizes for the nandflash chip */
@@ -130,7 +140,10 @@ typedef struct  __attribute__((__packed__)) _SectorInfo
 
 /* NandFlash functions */
 extern void nandflash_hw_init(void);
-extern void nandflash_cfg_16bits_dbw_init(void);
+
+// EMWHBR: NAND data bus width is 8 bits, removed to shrink size of the final bin-file
+//extern void nandflash_cfg_16bits_dbw_init(void);
+
 extern int load_nandflash(unsigned int img_addr, unsigned int img_size, unsigned int img_dest);
-extern BOOL AT91F_NandEraseBlock0(void);
+
 #endif

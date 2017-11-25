@@ -40,72 +40,86 @@
 
 #ifdef CFG_SDRAM
 
-/* Write SDRAMC register */
-static inline void write_sdramc(unsigned int offset, const unsigned int value)
-{
-	writel(value, offset + AT91C_BASE_SDRAMC);
-}
-
-/* Read SDRAMC registers */
-static inline unsigned int read_sdramc(unsigned int offset)
-{
-	return readl(offset + AT91C_BASE_SDRAMC);
-}
-
 //*----------------------------------------------------------------------------
 //* \fn    sdram_init
 //* \brief Initialize the SDRAM Controller
 //*----------------------------------------------------------------------------
 int sdram_init(unsigned int sdramc_cr, unsigned int sdramc_tr)
 {
-	volatile unsigned int i;
+  /* Register usage:
+   * r0: Argument 1, sdramc_cr (Procedure Call Standard for the ARM Architecture)
+   * r1: Argument 2, sdramc_tr (Procedure Call Standard for the ARM Architecture)
+   * r2: Base address SDRAMC
+   * r3: Base address SDRAM
+   * r4: Temporary values 
+   * r5: Temporary values */
 
-	/* Performs the hardware initialization */
-	sdramc_hw_init();
+  /* Preserve registers, according to standard */
+  asm volatile("push   {r4,r5}");
 
-	/* CFG Control Register */
-	write_sdramc(SDRAMC_CR, sdramc_cr);
+  /* Performs the hardware initialization */
+  sdramc_hw_init();
 
-	for (i =0; i< 1000;i++);
+  /* The initialization sequence of SDRAMC according to
+     AT91SAM9260 Reference Manual, Document: 6221H-ATARM-12-Aug-08.
+     See section 22.4.1, SDRAM Device Initialization (Step 1-11). */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_PRCGALL_CMD);	// Set PRCHG AL
-	writel(0x00000000, AT91C_SDRAM);						// Perform PRCHG
+  asm volatile("ldr    r2, =0xffffea00\n\t"
+	       "ldr    r3, =0x20000000");
 
-	for (i =0; i< 10000;i++);
+  /* Step 1: SDRAM features */
+  asm volatile("str    r0, [r2, #0x08]");    /* SDRAMC_CR */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 1st CBR
-	writel(0x00000001, AT91C_SDRAM+4);						// Perform CBR
+  /* Step 2: Not applicable (mobile SDRAM) */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 2 CBR
-	writel(0x00000002, AT91C_SDRAM+8);						// Perform CBR
+  /* Step 3: SDRAM memory type */
+  asm volatile("mov    r4, #0x0\n\t"
+	       "str    r4, [r2, #0x24]");    /* SDRAMC_MDR */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 3 CBR
-	writel(0x00000003, AT91C_SDRAM+0xc);					// Perform CBR
+  /* Step 4: A minimum pause of 200 μs */
+  asm volatile("ldr    r4, =30000\n\t"
+	       "delay_200us:\n\t"
+	       "subs   r4, r4, #1\n\t"
+	       "bne    delay_200us");
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 4 CBR
-	writel(0x00000004, AT91C_SDRAM+0x10);					// Perform CBR
+  /* Step 5: NOP command to SDRAM devices */
+  asm volatile("mov    r4, #1\n\t"
+	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
+	       "str    r4, [r3]");           /* Write to SDRAM */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 5 CBR
-	writel(0x00000005, AT91C_SDRAM+0x14);					// Perform CBR
+  /* Step 6: All banks precharge command */
+  asm volatile("mov    r4, #2\n\t"
+	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
+	       "str    r4, [r3]");           /* Write to SDRAM */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 6 CBR
-	writel(0x00000006, AT91C_SDRAM+0x18);					// Perform CBR
+  /* Step 7: 8 x auto-refresh (CBR) cycles */
+  asm volatile("mov    r4, #4\n\t"
+	       "mov    r5, #8\n\t"
+	       "eight_cbr:\n\t"
+	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
+	       "str    r4, [r3]\n\t"         /* Write to SDRAM */
+	       "subs   r5, r5, #1\n\t"
+	       "bne    eight_cbr");
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 7 CBR
-	writel(0x00000007, AT91C_SDRAM+0x1C);					// Perform CBR
+  /* Step 8: Load mode register command */
+  asm volatile("mov    r4, #3\n\t"
+	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
+	       "str    r4, [r3]");           /* Write to SDRAM */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 8 CBR
-	writel(0x00000008, AT91C_SDRAM+0x20);					// Perform CBR
+  /* Step 9: Not applicable (mobile SDRAM) */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_LMR_CMD);		// Set LMR operation
-	writel(0xcafedede, AT91C_SDRAM+0x24);					// Perform LMR burst=1, lat=2
+  /* Step 10: Normal mode */
+  asm volatile("mov    r4, #0\n\t"
+	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
+	       "str    r4, [r3]");           /* Write to SDRAM */
 
-	write_sdramc(SDRAMC_TR, sdramc_tr);						// Set Refresh Timer
+  /* Step 11: Refresh rate */
+  asm volatile("str    r1, [r2, #0x04]");    /* SDRAMC_TR      */
 
-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_NORMAL_CMD);	// Set Normal mode
-	writel(0x00000000, AT91C_SDRAM);						// Perform Normal mode
+  /* Restore registers, according to standard */
+  asm volatile("pop  {r4,r5}");
 
-	return 0;
+  return 0;
 }
 
 #endif /* CFG_SDRAM */

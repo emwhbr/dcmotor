@@ -233,7 +233,7 @@ static int df_read(
 			buffer += SizeToRead;
 		} else {
 			/* We got a timeout */
-			dbg_print("Timeout while waiting for dataflash ready\n");
+			dbg_print("Timeout while waiting for DataFlash ready\n");
 			return FAILURE;
 		}
 	}
@@ -246,7 +246,7 @@ static int df_read(
 /*----------------------------------------------------------------------*/
 static int df_download(AT91PS_DF pDf, unsigned int img_addr, unsigned int img_size, unsigned int img_dest)
 {
-	dbg_print(">Loading from Dataflash[");
+	dbg_print("DataFlash[");
 	dbg_print_hex(img_addr);
 	dbg_print("] to SDRAM[");
 	dbg_print_hex(img_dest);
@@ -254,9 +254,9 @@ static int df_download(AT91PS_DF pDf, unsigned int img_addr, unsigned int img_si
 	/* read bytes in the dataflash */
 	if(df_read(pDf, img_addr,(unsigned char *)img_dest, img_size) == FAILURE)
 		return FAILURE;
-	dbg_print("\r\n>Loading complete, [");
+	dbg_print("\r\nDone[");
 	dbg_print_hex(IMG_SIZE);
-	dbg_print("] bytes\r\n");
+	dbg_print("]\r\n");
 	/* wait the dataflash ready status */
 	return df_wait_ready(pDf);
 }
@@ -319,9 +319,9 @@ static int df_init (AT91PS_DF pDf)
 			pDf->dfDescription.pages_number = 4096;
 			pDf->dfDescription.pages_size = 528;
 			pDf->dfDescription.page_offset = 10;
-			dbg_print(">AT45DB161D detected\r\n");
+			dbg_print("AT45DB161D detected\r\n");
 			break;
-
+/*
 		case AT45DB321B:
 			pDf->dfDescription.pages_number = 8192;
 			pDf->dfDescription.pages_size = 528;
@@ -335,7 +335,7 @@ static int df_init (AT91PS_DF pDf)
 			pDf->dfDescription.page_offset = 11;
 			dbg_print(">AT45DB642D detected\r\n");
 			break;
-/*
+
 		case AT45DB1282:
 			pDf->dfDescription.pages_number = 16384;
 			pDf->dfDescription.pages_size = 1056;
@@ -403,17 +403,11 @@ int load_df(unsigned int pcs, unsigned int img_addr, unsigned int img_size, unsi
     	if (df_init(pDf) == FAILURE)
         	return FAILURE;
 
-#ifdef AT91SAM9260
-	/* Test if a button has been pressed or not */
-	/* Erase Page 0 to avoid infinite loop */
-	df_recovery(pDf);
-#endif
-
     	df_continuous_read(pDf, (char *)rxBuffer, 32, img_addr);
 	df_wait_ready(pDf);
 
 	if (df_is_boot_valid((unsigned char*)rxBuffer) == FAILURE) {
-		dbg_print(">Invalid Boot Area...\n\r");
+		dbg_print("+Invalid Boot Area...\n\r");
 		return FAILURE;
 	}
 

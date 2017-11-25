@@ -47,6 +47,11 @@
 #include "sam9_l9260.h"
 #endif
 
+#ifdef SAM9_L9260_HBR
+#include "AT91SAM9260_inc.h"
+#include "sam9_l9260_hbr.h"
+#endif
+
 #ifdef AT91SAM9261
 #include "AT91SAM9261_inc.h"
 #include "at91sam9261ek.h"
