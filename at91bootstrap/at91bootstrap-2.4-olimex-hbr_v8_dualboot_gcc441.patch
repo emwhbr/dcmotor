@@ -1,0 +1,1648 @@
+diff -Nur at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/dataflash/sam9_l9260_hbr.h at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/dataflash/sam9_l9260_hbr.h
+--- at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/dataflash/sam9_l9260_hbr.h	1970-01-01 01:00:00.000000000 +0100
++++ at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/dataflash/sam9_l9260_hbr.h	2012-06-15 22:19:15.732000196 +0200
+@@ -0,0 +1,149 @@
++/* ----------------------------------------------------------------------------
++ *         ATMEL Microcontroller Software Support  -  ROUSSET  -
++ * ----------------------------------------------------------------------------
++ * Copyright (c) 2006, Atmel Corporation
++
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *
++ * - Redistributions of source code must retain the above copyright notice,
++ * this list of conditions and the disclaiimer below.
++ *
++ * - Redistributions in binary form must reproduce the above copyright notice,
++ * this list of conditions and the disclaimer below in the documentation and/or
++ * other materials provided with the distribution.
++ *
++ * Atmel's name may not be used to endorse or promote products derived from
++ * this software without specific prior written permission.
++ *
++ * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
++ * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
++ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ * ----------------------------------------------------------------------------
++ * File Name           : sam9_l9260.h
++ * Object              :
++ * Creation            : NLe Jul 13th 2006
++ *-----------------------------------------------------------------------------
++ */
++#ifndef _SAM9_L9260_HBR_H
++#define _SAM9_L9260_HBR_H
++#include	"spi.h"
++
++/* ******************************************************************* */
++/* PMC Settings                                                        */
++/*                                                                     */
++/* The main oscillator is enabled as soon as possible in the c_startup */
++/* and MCK is switched on the main oscillator.                         */
++/* PLL initialization is done later in the hw_init() function          */
++/* ******************************************************************* */
++#if 0
++  #define MASTER_CLOCK		(200704000/4)
++  #define PLL_LOCK_TIMEOUT	1000000
++
++  #define PLLA_SETTINGS		0x20613F09
++  #define PLLB_SETTINGS		0x10483F0E
++
++  /* Switch MCK on PLLA output PCK = PLLA = 4 * MCK */
++  #define MCKR_SETTINGS	(AT91C_PMC_CSS_PLLA_CLK \
++		  	| AT91C_PMC_PRES_CLK | AT91C_PMC_MDIV_3)
++#elif 1
++  #define MASTER_CLOCK		(180224000/2)
++  #define PLL_LOCK_TIMEOUT	1000000
++
++  #define PLLA_SETTINGS		0x20573F09
++  #define PLLB_SETTINGS		0x10483F0E
++
++  /* Switch MCK on PLLA output PCK = PLLA = 2 * MCK */
++  #define MCKR_SETTINGS	(AT91C_PMC_CSS_PLLA_CLK \
++		  	| AT91C_PMC_PRES_CLK | AT91C_PMC_MDIV_2)
++#elif 0
++  #define MASTER_CLOCK		(159744000/2)
++  #define PLL_LOCK_TIMEOUT	1000000
++
++  #define PLLA_SETTINGS		0x204D3F09
++  #define PLLB_SETTINGS		0x10483F0E
++
++  /* Switch MCK on PLLA output PCK = PLLA = 2 * MCK */
++  #define MCKR_SETTINGS	(AT91C_PMC_CSS_PLLA_CLK \
++		  	| AT91C_PMC_PRES_CLK | AT91C_PMC_MDIV_2)
++#elif 0
++  #define MASTER_CLOCK		(147456000/2)
++  #define PLL_LOCK_TIMEOUT	1000000
++
++  #define PLLA_SETTINGS		0x20473F09
++  #define PLLB_SETTINGS		0x10483F0E
++
++  /* Switch MCK on PLLA output PCK = PLLA = 2 * MCK */
++  #define MCKR_SETTINGS	(AT91C_PMC_CSS_PLLA_CLK \
++		  	| AT91C_PMC_PRES_CLK | AT91C_PMC_MDIV_2)
++#elif 0 /* not supported, for test purposes only */
++  #define MASTER_CLOCK		(198656000/2)
++  #define PLL_LOCK_TIMEOUT	1000000
++
++  #define PLLA_SETTINGS	0x2060BF09
++  #define PLLB_SETTINGS	0x10483F0E
++
++  /* Switch MCK on PLLA output PCK = PLLA = 2 * MCK */
++  #define MCKR_SETTINGS	(AT91C_PMC_CSS_PLLA_CLK | AT91C_PMC_PRES_CLK | AT91C_PMC_MDIV_2)
++#endif
++
++
++/* ******************************************************************* */
++/* DataFlash Settings                                                  */
++/*                                                                     */
++/* ******************************************************************* */
++#define AT91C_BASE_SPI	AT91C_BASE_SPI0
++#define AT91C_ID_SPI	AT91C_ID_SPI0
++
++/* SPI CLOCK */
++#define AT91C_SPI_CLK 		 5000000
++/* AC characteristics */
++/* DLYBS = tCSS= 250ns min and DLYBCT = tCSH = 250ns */
++#define DATAFLASH_TCSS		(0x1a << 16)	/* 250ns min (tCSS) <=> 12/48000000 = 250ns */
++#define DATAFLASH_TCHS		(0x1 << 24)	/* 250ns min (tCSH) <=> (64*1+SCBR)/(2*48000000) */
++
++#define DF_CS_SETTINGS 		((SPI_MODE) | (AT91C_SPI_DLYBS & DATAFLASH_TCSS) | (AT91C_SPI_DLYBCT & DATAFLASH_TCHS) | ((MASTER_CLOCK / AT91C_SPI_CLK) << 8))
++
++
++/* ******************************************************************* */
++/* BootStrap Settings                                                  */
++/*                                                                     */
++/* ******************************************************************* */
++#define MACH_TYPE       	1501		/* SAM9-L9260 */
++
++#define IMG_ADDRESS 		0x8400		/* Image Address in DataFlash */
++
++#if	defined(IMG_SIZE)
++#warning			"IMG_SIZE redefined"
++#else
++#define	IMG_SIZE		0x32000		/* Image Size in DataFlash    */
++#endif
++
++#if	defined(JUMP_ADDR)
++#warning			"JUMP_ADDR redefined"
++#else
++#define JUMP_ADDR		0x23F00000	/* Final Jump Address 	      */
++#endif
++
++/* ******************************************************************* */
++/* Application Settings                                                */
++/* ******************************************************************* */
++#undef CFG_NANDFLASH
++
++#define CFG_DEBUG
++#define CFG_DATAFLASH
++#define	CFG_SDRAM
++#define	CFG_HW_INIT
++
++#define AT91_BOOTSTRAP_VER "HBR-V7DF"
++
++#endif	/* _SAM9_L9260_HBR_H */
+diff -Nur at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/nandflash/sam9_l9260_hbr.h at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/nandflash/sam9_l9260_hbr.h
+--- at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/nandflash/sam9_l9260_hbr.h	1970-01-01 01:00:00.000000000 +0100
++++ at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/nandflash/sam9_l9260_hbr.h	2012-06-17 21:08:07.268000175 +0200
+@@ -0,0 +1,258 @@
++/* ----------------------------------------------------------------------------
++ *         ATMEL Microcontroller Software Support  -  ROUSSET  -
++ * ----------------------------------------------------------------------------
++ * Copyright (c) 2006, Atmel Corporation
++
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *
++ * - Redistributions of source code must retain the above copyright notice,
++ * this list of conditions and the disclaimer below.
++ *
++ * - Redistributions in binary form must reproduce the above copyright notice,
++ * this list of conditions and the disclaimer below in the documentation and/or
++ * other materials provided with the distribution.
++ *
++ * Atmel's name may not be used to endorse or promote products derived from
++ * this software without specific prior written permission.
++ *
++ * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
++ * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
++ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ * ----------------------------------------------------------------------------
++ * File Name           : at91sam9260ek.h
++ * Object              :
++ * Creation            : NLe Sep 28th 2006
++ *-----------------------------------------------------------------------------
++ */
++#ifndef _SAM9_L9260_HBR_H
++#define _SAM9_L9260_HBR_H
++#include	"spi.h"
++
++/* ******************************************************************* */
++/* Fastboot Settings                                                   */
++/*                                                                     */
++/* ******************************************************************* */
++#define CONFIG_FASTBOOT
++//#undef CONFIG_FASTBOOT
++
++/* ******************************************************************* */
++/* PIO Settings                                                        */
++/*                                                                     */
++/* ******************************************************************* */
++#define NR_HW_PIO_PINS  5  /*  RX       - PB14  (DBGU)
++			    *  TX       - PB15  (DBGU)
++			    *  PWR_LED  - PA9   (yellow)
++			    *  STAT_LED - PA6   (green)
++			    *  BUT      - PC15
++ 			    */
++
++/* ******************************************************************* */
++/* PMC Settings                                                        */
++/*                                                                     */
++/* The main oscillator is enabled as soon as possible in the c_startup */
++/* and MCK is switched on the main oscillator.                         */
++/* PLL initialization is done later in the hw_init() function          */
++/* ******************************************************************* */
++#ifndef CONFIG_FASTBOOT
++
++/* Normal settings */
++#define MASTER_CLOCK		(200704000/4)   /* 50.176 MHz */
++#define PLL_LOCK_TIMEOUT	1000000
++
++#define PLLA_SETTINGS		0x20613F09      /* Matches: 50.176 MHz */
++#define PLLB_SETTINGS		0x10483F0E
++
++/* Switch MCK on PLLA output PCK = PLLA = 4 * MCK */
++#define MCKR_SETTINGS	(AT91C_PMC_CSS_PLLA_CLK \
++		  	| AT91C_PMC_PRES_CLK | AT91C_PMC_MDIV_3)
++
++#else
++
++/* Fastboot settings */
++//#define MASTER_CLOCK		(198656000/2)   /* 99.328 MHz */
++#define MASTER_CLOCK		(204800000/2)   /* 102.400 MHz */
++#define PLL_LOCK_TIMEOUT	1000000
++
++//#define PLLA_SETTINGS		0x2060BF09      /* Matches: 99.328 MHz */
++#define PLLA_SETTINGS		0x2063BF09      /* Matches: 102.400 MHz */
++#define PLLB_SETTINGS		0x10487F0E
++
++/* Switch MCK on PLLA output PCK = PLLA = 2 * MCK */
++#define MCKR_SETTINGS	(AT91C_PMC_CSS_PLLA_CLK \
++		  	| AT91C_PMC_PRES_CLK | AT91C_PMC_MDIV_2)
++
++#endif
++
++/* ******************************************************************* */
++/* SDRAM Settings                                                  */
++/*                                                                     */
++/* ******************************************************************* */
++#ifndef CONFIG_FASTBOOT
++
++/* Normal settings */
++#define SDRAMC_CR_SETTINGS  0x85227259  /* Configuration Register 
++					 * NC = 9-bit
++					 * NR = 13-bit
++					 * NB = 4 banks
++					 * CAS = 2 cycles
++					 * DBW = 32-bit
++					 * TWR = 2 cycles
++					 * TRC = 2 cycles
++					 * TRP = 2 cycles
++					 * TRCD = 2 cycles
++					 * TRAS = 5 cycles
++					 * TXSR = 8 cycles */
++#else
++
++/* Fastboot settings */
++#define SDRAMC_CR_SETTINGS  0x85237259  /* Configuration Register 
++					 * NC = 9-bit
++					 * NR = 13-bit
++					 * NB = 4 banks
++					 * CAS = 2 cycles
++					 * DBW = 32-bit
++					 * TWR = 2 cycles
++					 * TRC = 7 cycles
++					 * TRP = 3 cycles
++					 * TRCD = 2 cycles
++					 * TRAS = 5 cycles
++					 * TXSR = 8 cycles */
++#endif
++
++/* Refresh Timer Register 
++ * 64 ms, 8K-rows --> 64000/8192=7.8125 */
++#define SDRAMC_TR_SETTINGS  ((MASTER_CLOCK * 7) / 1000000)
++
++/* ******************************************************************* */
++/* NandFlash Settings                                                  */
++/*                                                                     */
++/* ******************************************************************* */
++#define AT91C_SMARTMEDIA_BASE	0x40000000
++
++#define AT91_SMART_MEDIA_ALE    (1 << 21)	/* our ALE is AD21 */
++#define AT91_SMART_MEDIA_CLE    (1 << 22)	/* our CLE is AD22 */
++
++#define NAND_DISABLE_CE() do { *(volatile unsigned int *)AT91C_PIOC_SODR = AT91C_PIO_PC14;} while(0)
++#define NAND_ENABLE_CE() do { *(volatile unsigned int *)AT91C_PIOC_CODR = AT91C_PIO_PC14;} while(0)
++
++#define NAND_WAIT_READY() while (!(*(volatile unsigned int *)AT91C_PIOC_PDSR & AT91C_PIO_PC13))
++
++
++/* ******************************************************************** */
++/* SMC Chip Select 3 Timings for NandFlash for MASTER_CLOCK = 100000000.*/
++/* Micron 16bits 256Mb for MASTER_CLOCK = 100000000.			*/
++/* Please refer to SMC section in AT91SAM9261 datasheet to learn how 	*/
++/* to generate these values. 						*/
++/* ******************************************************************** */
++#define AT91C_SM_NWE_SETUP	(0 << 0)
++#define AT91C_SM_NCS_WR_SETUP	(0 << 8)
++#define AT91C_SM_NRD_SETUP	(0 << 16)
++#define AT91C_SM_NCS_RD_SETUP	(0 << 24)
++  
++#define AT91C_SM_NWE_PULSE 	(4 << 0)
++#define AT91C_SM_NCS_WR_PULSE	(6 << 8)
++#ifndef CONFIG_FASTBOOT
++/* Normal settings */
++#define AT91C_SM_NRD_PULSE	(3 << 16)
++#else
++/* Fastboot settings */
++#define AT91C_SM_NRD_PULSE	(2 << 16)
++#endif
++#define AT91C_SM_NCS_RD_PULSE	(5 << 24)
++  
++#define AT91C_SM_NWE_CYCLE 	(6 << 0)
++#ifndef CONFIG_FASTBOOT
++/* Normal settings */
++#define AT91C_SM_NRD_CYCLE	(5 << 16)
++#define AT91C_SM_TDF	        (1 << 16)
++#else
++/* Fastboot settings */
++#define AT91C_SM_NRD_CYCLE	(3 << 16)
++#define AT91C_SM_TDF	        (0 << 16)
++#endif
++
++
++/* ******************************************************************** */
++/* SMC Chip Select 3 Timings for NandFlash for MASTER_CLOCK = 100000000.*/
++/* Micron 16bits 256Mb for MASTER_CLOCK = 100000000.			*/
++/* Please refer to SMC section in AT91SAM9261 datasheet to learn how 	*/
++/* to generate these values. 						*/
++/* ******************************************************************** */
++/*#define AT91C_SM_NWE_SETUP	(0 << 0)
++#define AT91C_SM_NCS_WR_SETUP	(0 << 8)
++#define AT91C_SM_NRD_SETUP	(0 << 16)
++#define AT91C_SM_NCS_RD_SETUP	(0 << 24)
++  
++#define AT91C_SM_NWE_PULSE 	(2 << 0)
++#define AT91C_SM_NCS_WR_PULSE	(3 << 8)
++#define AT91C_SM_NRD_PULSE	(2 << 16)
++#define AT91C_SM_NCS_RD_PULSE	(3 << 24)
++  
++#define AT91C_SM_NWE_CYCLE 	(3 << 0)
++#define AT91C_SM_NRD_CYCLE	(3 << 16)
++
++#define AT91C_SM_TDF	        (1 << 16)
++*/
++
++/* ******************************************************************* */
++/* BootStrap Settings                                                  */
++/*                                                                     */
++/* ******************************************************************* */
++#define MACH_TYPE      		1501		/* SAM9-L9260 */
++
++#define BOOT_MODE_UBOOT   0
++#define BOOT_MODE_KERNEL  1
++
++#define IMG_ADDR_UBOOT    0x1CF00000	/* U-Boot Address in NandFlash */
++#define IMG_ADDR_KERNEL   0x1D300000    /* Kernel Address in NandFlash */
++
++#ifndef CONFIG_FASTBOOT
++#define IMG_SIZE_UBOOT    0x0E0000      /* Normal: U-Boot Size in NandFlash (896KB) */
++#define IMG_SIZE_KERNEL   0x300000      /* Normal: Kernel Size in NandFlash (  3MB) */
++#else
++#define IMG_SIZE_UBOOT    0x040000      /* Fastboot: U-Boot Size in NandFlash (256KB) */
++#define IMG_SIZE_KERNEL   0x219800      /* Fastboot: Kernel Size in NandFlash (2.2MB) 
++					 * Must be multiple of 2K */
++#endif
++
++#define JUMP_ADDR_UBOOT   0x23F00000	/* Final Jump Address SDRAM (U-Boot) */
++#define JUMP_ADDR_KERNEL  0x20008000	/* Final Jump Address SDRAM (Kernel) */
++
++#define UBOOT_HEADER_SIZE  0x40         /* Compensate for U-Boot header:
++					 * 0x20008000-40 = 0x20007FC0,
++					 * when loading kernel */
++
++/* Passing kernel parameters (ARM):
++ * The recommended placement is in the first 16KiB of RAM,
++ * usually the start of physical RAM plus 0x100.
++*/
++#define KERNEL_PARAM_START_ADDR  0x20000000
++
++/* ******************************************************************* */
++/* Application Settings                                                */
++/* ******************************************************************* */
++#undef CFG_DATAFLASH
++
++#define CFG_DEBUG
++#define CFG_NANDFLASH
++#undef	NANDFLASH_SMALL_BLOCKS	/* NANDFLASH_LARGE_BLOCKS used instead */
++#define CFG_SDRAM
++#define CFG_HW_INIT
++
++#ifndef CONFIG_FASTBOOT
++#define AT91_BOOTSTRAP_VER "HBR-V8NF-Normal  "
++#else
++#define AT91_BOOTSTRAP_VER "HBR-V8NF-Fast    "
++#endif
++
++#endif	/* _SAM9_L9260_HBR_H */
+diff -Nur at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/sam9_l9260_hbr.c at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/sam9_l9260_hbr.c
+--- at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/sam9_l9260_hbr.c	1970-01-01 01:00:00.000000000 +0100
++++ at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/sam9_l9260_hbr.c	2012-06-15 22:19:15.733000197 +0200
+@@ -0,0 +1,202 @@
++/* ----------------------------------------------------------------------------
++ *         ATMEL Microcontroller Software Support  -  ROUSSET  -
++ * ----------------------------------------------------------------------------
++ * Copyright (c) 2006, Atmel Corporation
++
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *
++ * - Redistributions of source code must retain the above copyright notice,
++ * this list of conditions and the disclaiimer below.
++ *
++ * - Redistributions in binary form must reproduce the above copyright notice,
++ * this list of conditions and the disclaimer below in the documentation and/or
++ * other materials provided with the distribution.
++ *
++ * Atmel's name may not be used to endorse or promote products derived from
++ * this software without specific prior written permission.
++ *
++ * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
++ * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
++ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ * ----------------------------------------------------------------------------
++ * File Name           : sam9_l9260.c
++ * Object              :
++ * Creation            : NLe Jul 13th 2006
++ * ODi Nov 9th         : dstp #3507 "Bad PIO descriptors in at91samxxxek.c"
++ * ... May 5th         : dimitar at olimex.com: modified for SAM9-L9260
++ *-----------------------------------------------------------------------------
++ */
++#include "../../include/part.h"
++#include "../../include/gpio.h"
++#include "../../include/pmc.h"
++#include "../../include/debug.h"
++#include "../../include/sdramc.h"
++#include "../../include/main.h"
++#ifdef CFG_NANDFLASH
++#include "../../include/nandflash.h"
++#endif
++#ifdef CFG_DATAFLASH
++#include "../../include/dataflash.h"
++#endif
++
++static inline unsigned int get_cp15(void)
++{
++	unsigned int value;
++	__asm__("mrc p15, 0, %0, c1, c0, 0" : "=r" (value));
++	return value;
++}
++
++static inline void set_cp15(unsigned int value)
++{
++	__asm__("mcr p15, 0, %0, c1, c0, 0" : : "r" (value));
++}
++
++/*----------------------------------------------------------------------------*/
++/* \fn    hw_init							      */
++/* \brief This function performs very low level HW initialization	      */
++/* This function is invoked as soon as possible during the c_startup	      */
++/* The bss segment must be initialized					      */
++/*----------------------------------------------------------------------------*/
++void hw_init(void)
++{
++	unsigned int cp15;
++	
++	/* Configure PIOs */
++	const struct pio_desc hw_pio[NR_HW_PIO_PINS] = {
++	  {AT91C_PIN_PB(14), 0, PIO_DEFAULT, PIO_PERIPH_A}, /* RX (DBGU)             */
++	  {AT91C_PIN_PB(15), 0, PIO_DEFAULT, PIO_PERIPH_A}, /* TX (DBGU)             */
++	  {AT91C_PIN_PA(9),  0, PIO_DEFAULT, PIO_OUTPUT},   /* PWR_LED  (yellow) Off */
++	  {AT91C_PIN_PA(6),  0, PIO_DEFAULT, PIO_OUTPUT},   /* STAT_LED (green)  On  */
++	  {AT91C_PIN_PC(15), 0, PIO_DEFAULT, PIO_INPUT}     /* BUT                   */
++	};
++
++	/* Disable watchdog */
++	writel(AT91C_WDTC_WDDIS, AT91C_BASE_WDTC + WDTC_WDMR);
++
++	/* Configure the PIO controller and set initial state of the LEDs */
++	pio_setup(hw_pio);
++
++	/* At this stage the main oscillator is supposed to be enabled
++	 * PCK = MCK = MOSC */
++
++	/* Configure PLLA = MOSC * (PLL_MULA + 1) / PLL_DIVA */
++	pmc_cfg_plla(PLLA_SETTINGS, PLL_LOCK_TIMEOUT);
++
++	/* Switch MCK on PLLA output PCK = PLLA = 2 * MCK */
++	pmc_cfg_mck(MCKR_SETTINGS, PLL_LOCK_TIMEOUT);
++
++	/* Configure PLLB */
++	pmc_cfg_pllb(PLLB_SETTINGS, PLL_LOCK_TIMEOUT);
++
++	/* Configure CP15 */
++	cp15 = get_cp15();
++	cp15 |= I_CACHE;
++	set_cp15(cp15);
++
++#ifdef CFG_DEBUG
++	/* Enable Debug messages on the DBGU */
++	dbg_init(BAUDRATE(MASTER_CLOCK, 115200));
++
++	dbg_print("\n\rAT91Bootstrap : ");
++	dbg_print(AT91_BOOTSTRAP_VER);
++	dbg_print("\n\r");
++#endif /* CFG_DEBUG */
++
++	/* Initialize the matrix */
++	writel(readl(AT91C_BASE_CCFG + CCFG_EBICSA) | AT91C_EBI_CS1A_SDRAMC, AT91C_BASE_CCFG + CCFG_EBICSA);
++
++	/* Configure SDRAM Controller */
++	sdram_init(SDRAMC_CR_SETTINGS,    /* Configuration Register */
++		   SDRAMC_TR_SETTINGS);	  /* Refresh Timer Register */
++
++	/* Dummy code, for setting breakpoint with OpenOCD */
++	__asm__("nop");
++	__asm__("nop");
++}
++
++/*------------------------------------------------------------------------------*/
++/* \fn    sdramc_hw_init							*/
++/* \brief This function performs SDRAMC HW initialization			*/
++/*------------------------------------------------------------------------------*/
++void sdramc_hw_init(void)
++{
++	/* Configure PIOs */
++/*	const struct pio_desc sdramc_pio[] = {
++		{"D16", AT91C_PIN_PC(16), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D17", AT91C_PIN_PC(17), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D18", AT91C_PIN_PC(18), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D19", AT91C_PIN_PC(19), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D20", AT91C_PIN_PC(20), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D21", AT91C_PIN_PC(21), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D22", AT91C_PIN_PC(22), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D23", AT91C_PIN_PC(23), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D24", AT91C_PIN_PC(24), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D25", AT91C_PIN_PC(25), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D26", AT91C_PIN_PC(26), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D27", AT91C_PIN_PC(27), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D28", AT91C_PIN_PC(28), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D29", AT91C_PIN_PC(29), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D30", AT91C_PIN_PC(30), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{"D31", AT91C_PIN_PC(31), 0, PIO_DEFAULT, PIO_PERIPH_A},
++		{(char *) 0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++	};
++*/
++	/* Configure the SDRAMC PIO controller to output PCK0 */
++/*	pio_setup(sdramc_pio); */
++
++	writel(0xFFFF0000, AT91C_BASE_PIOC + PIO_ASR(0));
++	writel(0xFFFF0000, AT91C_BASE_PIOC + PIO_PDR(0));
++
++}
++
++#ifdef CFG_NANDFLASH
++
++/*------------------------------------------------------------------------------*/
++/* \fn    nandflash_hw_init							*/
++/* \brief NandFlash HW init							*/
++/*------------------------------------------------------------------------------*/
++void nandflash_hw_init(void)
++{
++	/* Configure PIOs */
++	const struct pio_desc nand_pio[2] = {
++	  {AT91C_PIN_PC(13), 0, PIO_PULLUP, PIO_INPUT},  /* RDY_BSY */
++	  {AT91C_PIN_PC(14), 0, PIO_PULLUP, PIO_OUTPUT}  /* NANDCS  */
++	};
++
++	/* Setup Smart Media, first enable the address range of CS3 in HMATRIX user interface */
++	writel(readl(AT91C_BASE_CCFG + CCFG_EBICSA) | AT91C_EBI_CS3A_SM, AT91C_BASE_CCFG + CCFG_EBICSA);
++		    
++	/* Configure SMC CS3 */
++ 	writel((AT91C_SM_NWE_SETUP | AT91C_SM_NCS_WR_SETUP | AT91C_SM_NRD_SETUP | AT91C_SM_NCS_RD_SETUP), AT91C_BASE_SMC + SMC_SETUP3);
++  	writel((AT91C_SM_NWE_PULSE | AT91C_SM_NCS_WR_PULSE | AT91C_SM_NRD_PULSE | AT91C_SM_NCS_RD_PULSE), AT91C_BASE_SMC + SMC_PULSE3);
++	writel((AT91C_SM_NWE_CYCLE | AT91C_SM_NRD_CYCLE)						, AT91C_BASE_SMC + SMC_CYCLE3);
++	writel((AT91C_SMC_READMODE | AT91C_SMC_WRITEMODE | AT91C_SMC_NWAITM_NWAIT_DISABLE | 
++  		AT91C_SMC_DBW_WIDTH_EIGTH_BITS | AT91C_SM_TDF)						, AT91C_BASE_SMC + SMC_CTRL3);
++
++	/* Configure the PIO controller */
++	writel((1 << AT91C_ID_PIOC), PMC_PCER + AT91C_BASE_PMC);
++	pio_setup(nand_pio);
++}
++
++/*------------------------------------------------------------------------------*/
++/* \fn    nandflash_cfg_16bits_dbw_init						*/
++/* \brief Configure SMC in 16 bits mode						*/
++/*------------------------------------------------------------------------------*/
++// EMWHBR: NAND data bus width is 8 bits, removed to shrink size of the final bin-file
++//
++//void nandflash_cfg_16bits_dbw_init(void)
++//{
++//	writel(readl(AT91C_BASE_SMC + SMC_CTRL3) | AT91C_SMC_DBW_WIDTH_SIXTEEN_BITS, AT91C_BASE_SMC + SMC_CTRL3);
++//}
++
++#endif /* #ifdef CFG_NANDFLASH */
+diff -Nur at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/sam9_l9260_hbr.mk at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/sam9_l9260_hbr.mk
+--- at91bootstrap-2.4-olimex/board/sam9_l9260_hbr/sam9_l9260_hbr.mk	1970-01-01 01:00:00.000000000 +0100
++++ at91bootstrap-2.4-olimex-fastboot/board/sam9_l9260_hbr/sam9_l9260_hbr.mk	2012-06-15 22:19:15.733000197 +0200
+@@ -0,0 +1,10 @@
++# Target name (case sensitive!!!)
++TARGET=SAM9_L9260_HBR
++
++# Board name (case sensitive!!!)
++BOARD=sam9_l9260_hbr
++
++# Link Address and Top_of_Memory
++LINK_ADDR=0x200000
++TOP_OF_MEMORY=0x301000
++
+diff -Nur at91bootstrap-2.4-olimex/.config at91bootstrap-2.4-olimex-fastboot/.config
+--- at91bootstrap-2.4-olimex/.config	2009-07-16 15:31:44.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/.config	2012-06-17 22:24:12.279000175 +0200
+@@ -1,7 +1,7 @@
+-BOARDNAME=sam9_l9260
+-BOARD=sam9_l9260
+-PROJECT=dataflash
+-CONFIG_DATAFLASH=y
++BOARDNAME=sam9_l9260_hbr
++BOARD=sam9_l9260_hbr
++PROJECT=nandflash
++CONFIG_NANDFLASH=y
+ SPI_MODE=SPI_MODE_0
+ SPI_BOOT=SPI_BOOT_CS1
+ SPI_CLK=33000000
+diff -Nur at91bootstrap-2.4-olimex/do_build at91bootstrap-2.4-olimex-fastboot/do_build
+--- at91bootstrap-2.4-olimex/do_build	1970-01-01 01:00:00.000000000 +0100
++++ at91bootstrap-2.4-olimex-fastboot/do_build	2012-06-15 22:19:15.734000197 +0200
+@@ -0,0 +1,6 @@
++make CROSS_COMPILE=arm-unknown-linux-gnueabi- clean
++make CROSS_COMPILE=arm-unknown-linux-gnueabi- sam9_l9260_hbr_defconfig_nf
++make CROSS_COMPILE=arm-unknown-linux-gnueabi-
++arm-unknown-linux-gnueabi-objdump -S \
++result/sam9_l9260_hbr-nandflashboot-2.4.elf > \
++result/sam9_l9260_hbr-nandflashboot-2.4.dis
+diff -Nur at91bootstrap-2.4-olimex/driver/dataflash.c at91bootstrap-2.4-olimex-fastboot/driver/dataflash.c
+--- at91bootstrap-2.4-olimex/driver/dataflash.c	2009-05-27 23:33:43.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/driver/dataflash.c	2012-06-15 22:19:15.734000197 +0200
+@@ -233,7 +233,7 @@
+ 			buffer += SizeToRead;
+ 		} else {
+ 			/* We got a timeout */
+-			dbg_print("Timeout while waiting for dataflash ready\n");
++			dbg_print("Timeout while waiting for DataFlash ready\n");
+ 			return FAILURE;
+ 		}
+ 	}
+@@ -246,7 +246,7 @@
+ /*----------------------------------------------------------------------*/
+ static int df_download(AT91PS_DF pDf, unsigned int img_addr, unsigned int img_size, unsigned int img_dest)
+ {
+-	dbg_print(">Loading from Dataflash[");
++	dbg_print("DataFlash[");
+ 	dbg_print_hex(img_addr);
+ 	dbg_print("] to SDRAM[");
+ 	dbg_print_hex(img_dest);
+@@ -254,9 +254,9 @@
+ 	/* read bytes in the dataflash */
+ 	if(df_read(pDf, img_addr,(unsigned char *)img_dest, img_size) == FAILURE)
+ 		return FAILURE;
+-	dbg_print("\r\n>Loading complete, [");
++	dbg_print("\r\nDone[");
+ 	dbg_print_hex(IMG_SIZE);
+-	dbg_print("] bytes\r\n");
++	dbg_print("]\r\n");
+ 	/* wait the dataflash ready status */
+ 	return df_wait_ready(pDf);
+ }
+@@ -319,9 +319,9 @@
+ 			pDf->dfDescription.pages_number = 4096;
+ 			pDf->dfDescription.pages_size = 528;
+ 			pDf->dfDescription.page_offset = 10;
+-			dbg_print(">AT45DB161D detected\r\n");
++			dbg_print("AT45DB161D detected\r\n");
+ 			break;
+-
++/*
+ 		case AT45DB321B:
+ 			pDf->dfDescription.pages_number = 8192;
+ 			pDf->dfDescription.pages_size = 528;
+@@ -335,7 +335,7 @@
+ 			pDf->dfDescription.page_offset = 11;
+ 			dbg_print(">AT45DB642D detected\r\n");
+ 			break;
+-/*
++
+ 		case AT45DB1282:
+ 			pDf->dfDescription.pages_number = 16384;
+ 			pDf->dfDescription.pages_size = 1056;
+@@ -403,17 +403,11 @@
+     	if (df_init(pDf) == FAILURE)
+         	return FAILURE;
+ 
+-#ifdef AT91SAM9260
+-	/* Test if a button has been pressed or not */
+-	/* Erase Page 0 to avoid infinite loop */
+-	df_recovery(pDf);
+-#endif
+-
+     	df_continuous_read(pDf, (char *)rxBuffer, 32, img_addr);
+ 	df_wait_ready(pDf);
+ 
+ 	if (df_is_boot_valid((unsigned char*)rxBuffer) == FAILURE) {
+-		dbg_print(">Invalid Boot Area...\n\r");
++		dbg_print("+Invalid Boot Area...\n\r");
+ 		return FAILURE;
+ 	}
+ 
+diff -Nur at91bootstrap-2.4-olimex/driver/gpio.c at91bootstrap-2.4-olimex-fastboot/driver/gpio.c
+--- at91bootstrap-2.4-olimex/driver/gpio.c	2009-05-27 23:33:43.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/driver/gpio.c	2012-06-15 22:19:15.734000197 +0200
+@@ -150,12 +150,15 @@
+ /*------------------------------------------------------------------------------*/
+ static int pio_set_deglitch(unsigned pin, int is_on)
+ {
++  /* EMWHBR : Not used, commented to save space
++
+ 	unsigned	pio = pin_to_controller(pin);
+ 	unsigned	mask = pin_to_mask(pin);
+ 
+ 	if (pio >= AT91C_NR_PIO)
+ 		return -EINVAL;
+ 	write_pio((is_on ? PIO_IFER(pio) : PIO_IFDR(pio)), mask);
++  */
+ 	return 0;
+ }
+ 
+@@ -206,45 +209,49 @@
+ 		return -EINVAL;
+ 	pdsr = read_pio(PIO_PDSR(pio));
+ 	return (pdsr & mask) != 0;
++
++        return 0;
+ }
+ 
+ /*------------------------------------------------------------------------------*/
+ /* \fn    pio_device_pio_setup							*/
+ /* \brief Configure PIO in periph mode according to the platform informations	*/
+ /*------------------------------------------------------------------------------*/
+-int pio_setup (const struct pio_desc *pio_desc)
++void pio_setup (const struct pio_desc *pio_desc)
+ {
+-        unsigned        pio, pin = 0;
++  unsigned char i;
++  
++  /* Sets all the pio muxing of the corresponding device as 
++   * defined in its platform_data struct.
++   *
++   * NOTE! (EMWHBR) : - Rewritten to shrink size of the final bin-file
++   *                  - Not supporting PIO_PERIPH_B
++   */
++  for (i=0; i < NR_HW_PIO_PINS; i++) {
++
++    switch (pio_desc[i].type) {
++
++    case PIO_PERIPH_A:
++      pio_set_A_periph(pio_desc[i].pin_num,
++		       (pio_desc[i].attribute & PIO_PULLUP) ? 1 : 0);
++      break;
++    case PIO_PERIPH_B:
++      /*
++      pio_set_B_periph(pio_desc[i].pin_num,
++		       (pio_desc[i].attribute & PIO_PULLUP) ? 1 : 0);
++      */
++      break;
++    case PIO_INPUT:
++      pio_set_deglitch(pio_desc[i].pin_num,
++		       (pio_desc[i].attribute & PIO_DEGLITCH)? 1 : 0);
++      pio_set_gpio_input(pio_desc[i].pin_num,
++			 (pio_desc[i].attribute & PIO_PULLUP) ? 1 : 0);
++      break;
++    case PIO_OUTPUT:
++      pio_set_multi_drive(pio_desc[i].pin_num, (pio_desc[i].attribute & PIO_OPENDRAIN) ? 1 : 0);
++      pio_set_gpio_output(pio_desc[i].pin_num, pio_desc[i].dft_value);
++      break;
+ 
+-        if(!pio_desc) {
+-                return 0;
+-        }
+-
+-        /* Sets all the pio muxing of the corresponding device as defined in its platform_data struct */
+-        while (pio_desc->pin_name) {
+-                pio = pin_to_controller( pio_desc->pin_num);
+-                if (pio >= AT91C_NR_PIO)
+-                		return 0;
+-                else if (pio_desc->type == PIO_PERIPH_A)
+-                        pio_set_A_periph(pio_desc->pin_num,
+-                                (pio_desc->attribute & PIO_PULLUP) ? 1 : 0);
+-                else if (pio_desc->type == PIO_PERIPH_B)
+-                        pio_set_B_periph(pio_desc->pin_num,
+-                                (pio_desc->attribute & PIO_PULLUP) ? 1 : 0);
+-                else if (pio_desc->type == PIO_INPUT) {
+-                        pio_set_deglitch(pio_desc->pin_num,
+-                                (pio_desc->attribute & PIO_DEGLITCH)? 1 : 0);
+-                        pio_set_gpio_input(pio_desc->pin_num,
+-                                (pio_desc->attribute & PIO_PULLUP) ? 1 : 0);
+-                }
+-                else if(pio_desc->type == PIO_OUTPUT) {
+-                        pio_set_multi_drive(pio_desc->pin_num, (pio_desc->attribute & PIO_OPENDRAIN) ? 1 : 0);
+-                        pio_set_gpio_output(pio_desc->pin_num, pio_desc->dft_value);
+-                }
+-                else
+-                         return 0;
+-                ++pin;
+-                ++pio_desc;
+-        }
+-        return pin;
++    }
++  }
+ }
+diff -Nur at91bootstrap-2.4-olimex/driver/nandflash.c at91bootstrap-2.4-olimex-fastboot/driver/nandflash.c
+--- at91bootstrap-2.4-olimex/driver/nandflash.c	2009-05-27 23:33:43.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/driver/nandflash.c	2012-06-15 22:19:15.735000197 +0200
+@@ -75,23 +75,23 @@
+ 	pNandInfo->uBlockNbData	  = pNandInitInfo->uNandBlockSize;	/* Nb of DataBytes in a block */
+ 	pNandInfo->uDataNbBytes	  = pNandInitInfo->uNandSectorSize;	/* Nb of bytes in data section */
+ 	pNandInfo->uSpareNbBytes  = pNandInitInfo->uNandSpareSize;	/* Nb of bytes in spare section */
+-	pNandInfo->uSectorNbBytes = pNandInfo->uDataNbBytes +
+-								pNandInfo->uSpareNbBytes;	/* Total nb of bytes in a sector */
++	pNandInfo->uSectorNbBytes = pNandInfo->uDataNbBytes + 
++                                    pNandInfo->uSpareNbBytes;	        /* Total nb of bytes in a sector */
+ 
+ 	result = udiv(pNandInfo->uBlockNbData,pNandInfo->uDataNbBytes);
+ 	if(result.rem != 0) result.quot++;
+ 	pNandInfo->uBlockNbSectors = result.quot;		/* Nb of sector in a block */
+-	pNandInfo->uBlockNbSpares = pNandInfo->uSpareNbBytes * pNandInfo->uBlockNbSectors;	/* Nb of SpareBytes in a block */
+-	pNandInfo->uBlockNbBytes = pNandInfo->uSectorNbBytes * pNandInfo->uBlockNbSectors;	/* Total nb of bytes in a block */
++	pNandInfo->uBlockNbSpares = pNandInfo->uSpareNbBytes * 
++                                    pNandInfo->uBlockNbSectors;	/* Nb of SpareBytes in a block */
++	pNandInfo->uBlockNbBytes  = pNandInfo->uSectorNbBytes * 
++                                    pNandInfo->uBlockNbSectors;	/* Total nb of bytes in a block */
+ 
+ 	pNandInfo->uNbSectors = pNandInfo->uBlockNbSectors * pNandInfo->uNbBlocks;	/* Total nb of sectors in device */
+-	pNandInfo->uNbData = pNandInfo->uBlockNbBytes * pNandInfo->uNbBlocks;		/* Nb of DataBytes in device */
+-	pNandInfo->uNbSpares = pNandInfo->uBlockNbSpares * pNandInfo->uNbBlocks;	/* Nb of SpareBytes in device */
+-	pNandInfo->uNbBytes	= pNandInfo->uNbData + pNandInfo->uNbSpares;		/* Total nb of bytes in device */
+-
++	pNandInfo->uNbData    = pNandInfo->uBlockNbBytes * pNandInfo->uNbBlocks;	/* Nb of DataBytes in device */
++	pNandInfo->uNbSpares  = pNandInfo->uBlockNbSpares * pNandInfo->uNbBlocks;	/* Nb of SpareBytes in device */
++	pNandInfo->uNbBytes   = pNandInfo->uNbData + pNandInfo->uNbSpares;		/* Total nb of bytes in device */
+ 	pNandInfo->uDataBusWidth = pNandInitInfo->uNandBusWidth;			/* Data Bus Width (8/16 bits) */
+-	
+-	
++		
+ 	uSectorSize = pNandInfo->uDataNbBytes - 1;
+ 	pNandInfo->uOffset = 0;
+ 
+@@ -108,7 +108,7 @@
+ /*------------------------------------------------------------------------------*/
+ static PSNandInitInfo AT91F_NandReadID(void)
+ {
+-	unsigned int uChipID, i=0;
++	unsigned int uChipID;
+ 	unsigned char bManufacturerID, bDeviceID;
+ 	
+ 	/* Enable chipset */
+@@ -128,62 +128,21 @@
+ 	uChipID = (bManufacturerID << 8) | bDeviceID;
+ 	
+ 	/* Search in NandFlash_InitInfo[] */
+-	while (NandFlash_InitInfo[i].uNandID != 0)
+-	{
+-		if (NandFlash_InitInfo[i].uNandID == uChipID)
+-			return &NandFlash_InitInfo[i];	
+-	
+-		i++;
++	// EMWHBR: Redefined to shrink size of the final bin-file
++	//while (NandFlash_InitInfo[i].uNandID != 0)
++	//{
++	//	if (NandFlash_InitInfo[i].uNandID == uChipID)
++	//		return &NandFlash_InitInfo[i];	
++	//
++	//	i++;
++	//}
++	if (NandFlash_InitInfo.uNandID == uChipID) {
++	  return &NandFlash_InitInfo;
+ 	}
+ 	
+ 	return 0;
+ }
+ 
+-/*------------------------------------------------------------------------------*/
+-/* \fn    AT91F_NandEraseBlock0							*/
+-/* \brief Erase Block 0								*/
+-/*------------------------------------------------------------------------------*/
+-BOOL AT91F_NandEraseBlock0(void)
+-{
+-	unsigned int uPhySecNb = 0;
+-	BOOL bRet = TRUE;
+-
+-	/* Chip enable */
+-	NAND_ENABLE_CE();
+-
+-	/* Push Erase_1 command */
+-	WRITE_NAND_COMMAND(CMD_ERASE_1);
+-
+-	/* Push sector address in three cycles */
+-	WRITE_NAND_ADDRESS((uPhySecNb >>  0) & 0xFF);
+-	WRITE_NAND_ADDRESS((uPhySecNb >>  8) & 0xFF);
+-	WRITE_NAND_ADDRESS((uPhySecNb >> 16) & 0xFF);
+-
+-	/* Push Erase_2 command */
+-	WRITE_NAND_COMMAND(CMD_ERASE_2);
+-
+-	/* Wait for nand to be ready */
+-	NAND_WAIT_READY();
+-	NAND_WAIT_READY();
+-	
+-	/* Check status bit for error notification */
+-	WRITE_NAND_COMMAND(CMD_STATUS);
+-	NAND_WAIT_READY();
+-	if (READ_NAND() & STATUS_ERROR)
+-	{
+-		/* Error during block erasing */
+-		bRet = FALSE;
+-		goto exit;	
+-	}
+-
+-exit:
+-	/* Chip disable */
+-	NAND_DISABLE_CE();
+-
+-	return bRet;
+-}
+-
+-
+ #ifdef NANDFLASH_SMALL_BLOCKS
+ /*------------------------------------------------------------------------------*/
+ /* \fn    AT91F_NandReadSector							*/
+@@ -237,7 +196,7 @@
+ 	NAND_WAIT_READY();
+ 	NAND_WAIT_READY();	/* Need to be done twice, READY detected too early the first time? */
+ 	
+-	/* Read loop */
++	/* Read loop */	
+ 	if (pNandInfo->uDataBusWidth)
+ 	{	/* 16 bits */
+ 		for(i=0; i<uBytesToRead/2; i++) // Div2 because of 16bits
+@@ -325,18 +284,22 @@
+ 	NAND_WAIT_READY();	/* Need to be done twice, READY detected too early the first time? */
+ 	
+ 	/* Read loop */
+-	if (pNandInfo->uDataBusWidth)
+-	{	/* 16 bits */
+-		for(i=0; i<uBytesToRead/2; i++) /* Div2 because of 16bits */
+-		{
+-			*((short*)pOutBuffer) = READ_NAND16();
+-			pOutBuffer+=2;
+-		}
+-	} else {
+-		for(i=0; i<uBytesToRead; i++)
+-		{
+-			*pOutBuffer++ = READ_NAND();
+-		}
++	// EMWHBR: We know that we are using 8-bit
++	//if (pNandInfo->uDataBusWidth)
++	//{	/* 16 bits */
++	//	for(i=0; i<uBytesToRead/2; i++) /* Div2 because of 16bits */
++	//	{
++	//		*((short*)pOutBuffer) = READ_NAND16();
++	//		pOutBuffer+=2;
++	//	}
++	//} else {
++	//	for(i=0; i<uBytesToRead; i++)
++	//	{
++	//		*pOutBuffer++ = READ_NAND();
++	//	}
++	//}
++	for (i=0; i<uBytesToRead; i++) {
++	  *pOutBuffer++ = READ_NAND();
+ 	}
+ 
+ exit:
+@@ -351,11 +314,15 @@
+ /* \fn    AT91F_NandRead							*/
+ /* \brief Read Sector Algorithm							*/
+ /*------------------------------------------------------------------------------*/
+-static BOOL AT91F_NandRead(PSNandInfo pNandInfo, unsigned int uBlockNb, unsigned int uSectorNb, unsigned int uSpareValue, char *pOutBuffer)
++static BOOL AT91F_NandRead(PSNandInfo pNandInfo,
++			   unsigned int uBlockNb, unsigned int uSectorNb,
++			   unsigned int uSpareValue,
++			   char *pOutBuffer)
+ {
+ 	PSSectorInfo pSectorInfo;
+ 	unsigned int uSectorAddr = uBlockNb * pNandInfo->uBlockNbData + uSectorNb * pNandInfo->uDataNbBytes;
+ 
++
+ 	/* If uSectorNb = 0 -> First sector of the Block so read Spare bytes */
+ 	if (!uSectorNb)
+ 	{
+@@ -364,7 +331,7 @@
+ 		pSectorInfo = (PSSectorInfo)&pOutBuffer[pNandInfo->uDataNbBytes];
+ 		if (pSectorInfo->bBadBlock != 0xFF)
+ 		{
+-			return FALSE;
++		  return FALSE;
+ 		}
+ 		
+ 		/* Read Second Page Spare zone */
+@@ -372,7 +339,7 @@
+ 		pSectorInfo = (PSSectorInfo)&pOutBuffer[pNandInfo->uDataNbBytes];
+ 		if (pSectorInfo->bBadBlock != 0xFF)
+ 		{
+-			return FALSE;
++		  return FALSE;
+ 		}	
+ 	}
+ 
+@@ -388,8 +355,15 @@
+ 	SNandInfo sNandInfo;
+ 	PSNandInitInfo pNandInitInfo;
+ 	unsigned char *pOutBuffer = (unsigned char*)img_dest;
+-	unsigned int blockIdx, badBlock, blockRead, length, sizeToRead, nbSector, newBlock, sectorIdx, blockError, sectorSize;
+-	div_t		blocks;
++	unsigned int blockIdx, length, sizeToRead, nbSector, sectorIdx;
++	div_t	     blocks;
++
++	dbg_print("NAND[");
++	dbg_print_hex(img_addr);
++	dbg_print("] to SDRAM[");
++	dbg_print_hex(img_dest);
++	dbg_print("]\r\n");
++
+ 	nandflash_hw_init();
+ 	
+ 	/* Read Nand Chip ID */
+@@ -398,7 +372,7 @@
+ 	if (!pNandInitInfo)
+  	{
+ #ifdef CFG_DEBUG	
+-	   	dbg_print("\n\r-E- No NandFlash detected !!!\n\r");
++	   	dbg_print("\n\rNo NAND\n\r");
+ #endif
+ 		return -1;
+     	}
+@@ -406,20 +380,21 @@
+ 	/* Initialize NandInfo Structure */
+ 	AT91F_NandInit(&sNandInfo, pNandInitInfo);
+ 
+-	if (sNandInfo.uDataBusWidth)
+-		nandflash_cfg_16bits_dbw_init();
++	// EMWHBR: NAND data bus width is 8 bits, removed to shrink size of the final bin-file
++	//if (sNandInfo.uDataBusWidth) {
++	//  nandflash_cfg_16bits_dbw_init();
++	//}
+ 
+     	/* Initialize the block offset */
+     	blocks = udiv(img_addr , sNandInfo.uBlockNbData);
+     	blockIdx = blocks.quot;
+-	/* Initialize the number of bad blocks */
+-    	badBlock = 0;
+-	blockRead = 0;
+     
+ 	length = img_size;
+     
+ 	while (length > 0)
+ 	{
++	        dbg_print(".");
++
+         	/* Read a buffer corresponding to a block in the origin file */
+ 		if (length < sNandInfo.uBlockNbData)
+ 		{
+@@ -438,50 +413,29 @@
+             		nbSector++;
+         	}
+ 
+-        	newBlock = 1;
+-		/* Loop until a valid block has been read */
+-		while (newBlock == 1)
+-		{
+-			/* Reset the error flag */
+-			blockError = 0;
+-            
+-			/* Read the sectors */
+-			for (sectorIdx=0; (sectorIdx < nbSector) && (blockError == 0); sectorIdx++)
+-			{
+-				sectorSize = sizeToRead - (sectorIdx * sNandInfo.uDataNbBytes);
+-				if (sectorSize < sNandInfo.uDataNbBytes)
+-				{
+-					sectorSize = sizeToRead - (sectorIdx * sNandInfo.uDataNbBytes);
+-				}
+-				else
+-				{
+-					sectorSize = sNandInfo.uDataNbBytes;
+-				}
+-
+-	                	/* Read the sector */
+-        	        	if (AT91F_NandRead(&sNandInfo, blockIdx, sectorIdx, ZONE_DATA, pOutBuffer) == FALSE)
+-				{
+-					blockError = 1;
+-				}
+-				else
+-				{
+-					pOutBuffer+=sNandInfo.uDataNbBytes;
+-				}
+-			}
+-            
+-			if (blockError == 0)
+-			{
+-                		/* If the block is valid exit */
+-	                	newBlock = 0;
+-        	    	}
+-			blockIdx++;
++		/* Read the sectors in one block */
++		for (sectorIdx=0; (sectorIdx < nbSector); sectorIdx++) {
++
++		  if (AT91F_NandRead(&sNandInfo, blockIdx, sectorIdx, ZONE_DATA, (char *)pOutBuffer) == FALSE) {
++#ifdef CFG_DEBUG	
++		    dbg_print("\n\rError sector\n\r");
++#endif
++		    return -1;
++		  }
++		  pOutBuffer+=sNandInfo.uDataNbBytes;
+ 		}
++		
++		/* Increment block */
++		blockIdx++;
+ 
+         	/* Decrement length */
+ 	        length -= sizeToRead;
+-		blockRead++;
+ 	}
+ 
++	dbg_print("\r\nDone[");
++	dbg_print_hex(img_size);
++	dbg_print("]\r\n");
++
+ 	return 0;
+ }
+ #endif
+diff -Nur at91bootstrap-2.4-olimex/driver/sdramc.c at91bootstrap-2.4-olimex-fastboot/driver/sdramc.c
+--- at91bootstrap-2.4-olimex/driver/sdramc.c	2009-06-11 10:22:28.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/driver/sdramc.c	2012-06-15 22:19:15.735000197 +0200
+@@ -40,72 +40,86 @@
+ 
+ #ifdef CFG_SDRAM
+ 
+-/* Write SDRAMC register */
+-static inline void write_sdramc(unsigned int offset, const unsigned int value)
+-{
+-	writel(value, offset + AT91C_BASE_SDRAMC);
+-}
+-
+-/* Read SDRAMC registers */
+-static inline unsigned int read_sdramc(unsigned int offset)
+-{
+-	return readl(offset + AT91C_BASE_SDRAMC);
+-}
+-
+ //*----------------------------------------------------------------------------
+ //* \fn    sdram_init
+ //* \brief Initialize the SDRAM Controller
+ //*----------------------------------------------------------------------------
+ int sdram_init(unsigned int sdramc_cr, unsigned int sdramc_tr)
+ {
+-	volatile unsigned int i;
+-
+-	/* Performs the hardware initialization */
+-	sdramc_hw_init();
+-
+-	/* CFG Control Register */
+-	write_sdramc(SDRAMC_CR, sdramc_cr);
+-
+-	for (i =0; i< 1000;i++);
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_PRCGALL_CMD);	// Set PRCHG AL
+-	writel(0x00000000, AT91C_SDRAM);						// Perform PRCHG
+-
+-	for (i =0; i< 10000;i++);
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 1st CBR
+-	writel(0x00000001, AT91C_SDRAM+4);						// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 2 CBR
+-	writel(0x00000002, AT91C_SDRAM+8);						// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 3 CBR
+-	writel(0x00000003, AT91C_SDRAM+0xc);					// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 4 CBR
+-	writel(0x00000004, AT91C_SDRAM+0x10);					// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 5 CBR
+-	writel(0x00000005, AT91C_SDRAM+0x14);					// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 6 CBR
+-	writel(0x00000006, AT91C_SDRAM+0x18);					// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 7 CBR
+-	writel(0x00000007, AT91C_SDRAM+0x1C);					// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_RFSH_CMD);	// Set 8 CBR
+-	writel(0x00000008, AT91C_SDRAM+0x20);					// Perform CBR
+-
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_LMR_CMD);		// Set LMR operation
+-	writel(0xcafedede, AT91C_SDRAM+0x24);					// Perform LMR burst=1, lat=2
++  /* Register usage:
++   * r0: Argument 1, sdramc_cr (Procedure Call Standard for the ARM Architecture)
++   * r1: Argument 2, sdramc_tr (Procedure Call Standard for the ARM Architecture)
++   * r2: Base address SDRAMC
++   * r3: Base address SDRAM
++   * r4: Temporary values 
++   * r5: Temporary values */
++
++  /* Preserve registers, according to standard */
++  asm volatile("push   {r4,r5}");
++
++  /* Performs the hardware initialization */
++  sdramc_hw_init();
++
++  /* The initialization sequence of SDRAMC according to
++     AT91SAM9260 Reference Manual, Document: 6221H-ATARM-12-Aug-08.
++     See section 22.4.1, SDRAM Device Initialization (Step 1-11). */
++
++  asm volatile("ldr    r2, =0xffffea00\n\t"
++	       "ldr    r3, =0x20000000");
++
++  /* Step 1: SDRAM features */
++  asm volatile("str    r0, [r2, #0x08]");    /* SDRAMC_CR */
++
++  /* Step 2: Not applicable (mobile SDRAM) */
++
++  /* Step 3: SDRAM memory type */
++  asm volatile("mov    r4, #0x0\n\t"
++	       "str    r4, [r2, #0x24]");    /* SDRAMC_MDR */
++
++  /* Step 4: A minimum pause of 200 μs */
++  asm volatile("ldr    r4, =30000\n\t"
++	       "delay_200us:\n\t"
++	       "subs   r4, r4, #1\n\t"
++	       "bne    delay_200us");
++
++  /* Step 5: NOP command to SDRAM devices */
++  asm volatile("mov    r4, #1\n\t"
++	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
++	       "str    r4, [r3]");           /* Write to SDRAM */
++
++  /* Step 6: All banks precharge command */
++  asm volatile("mov    r4, #2\n\t"
++	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
++	       "str    r4, [r3]");           /* Write to SDRAM */
++
++  /* Step 7: 8 x auto-refresh (CBR) cycles */
++  asm volatile("mov    r4, #4\n\t"
++	       "mov    r5, #8\n\t"
++	       "eight_cbr:\n\t"
++	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
++	       "str    r4, [r3]\n\t"         /* Write to SDRAM */
++	       "subs   r5, r5, #1\n\t"
++	       "bne    eight_cbr");
++
++  /* Step 8: Load mode register command */
++  asm volatile("mov    r4, #3\n\t"
++	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
++	       "str    r4, [r3]");           /* Write to SDRAM */
++
++  /* Step 9: Not applicable (mobile SDRAM) */
++
++  /* Step 10: Normal mode */
++  asm volatile("mov    r4, #0\n\t"
++	       "str    r4, [r2, #0x00]\n\t"  /* SDRAMC_MR      */
++	       "str    r4, [r3]");           /* Write to SDRAM */
+ 
+-	write_sdramc(SDRAMC_TR, sdramc_tr);						// Set Refresh Timer
++  /* Step 11: Refresh rate */
++  asm volatile("str    r1, [r2, #0x04]");    /* SDRAMC_TR      */
+ 
+-	write_sdramc(SDRAMC_MR, AT91C_SDRAMC_MODE_NORMAL_CMD);	// Set Normal mode
+-	writel(0x00000000, AT91C_SDRAM);						// Perform Normal mode
++  /* Restore registers, according to standard */
++  asm volatile("pop  {r4,r5}");
+ 
+-	return 0;
++  return 0;
+ }
+ 
+ #endif /* CFG_SDRAM */
+diff -Nur at91bootstrap-2.4-olimex/include/gpio.h at91bootstrap-2.4-olimex-fastboot/include/gpio.h
+--- at91bootstrap-2.4-olimex/include/gpio.h	2009-05-27 23:33:43.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/include/gpio.h	2012-06-15 22:19:15.736000197 +0200
+@@ -50,12 +50,19 @@
+ #define PIO_DEGLITCH  (1 << 1)
+ #define PIO_OPENDRAIN (1 << 2)
+ 
++// EMWHBR: Redefined to shrink size of the final bin-file
++//struct pio_desc {
++//	const char *pin_name;   /* Pin Name */
++//	unsigned int pin_num;   /* Pin number */
++//	unsigned int dft_value; /* Default value for outputs */
++//	unsigned char attribute;
++//	enum pio_type type;
++//};
+ struct pio_desc {
+-	const char *pin_name;   /* Pin Name */
+-	unsigned int pin_num;   /* Pin number */
+-	unsigned int dft_value; /* Default value for outputs */
+-	unsigned char attribute;
+-	enum pio_type type;
++	unsigned int   pin_num;   /* Pin number */
++	unsigned int   dft_value; /* Default value for outputs */
++	unsigned char  attribute;
++	enum pio_type   type;
+ };
+ 
+ /* pio_set_value: assuming the pin is muxed as a gpio output, set its value. */
+@@ -64,7 +71,7 @@
+  * !!! PIO Clock must be enabled in the PMC !!! */
+ extern int pio_get_value(unsigned pin);
+ /* pio_device_pio_setup: Configure PIO in periph mode according to the platform informations */
+-extern int pio_setup (const struct pio_desc *pio_desc);
++extern void pio_setup (const struct pio_desc *pio_desc);
+ 
+ /* these pin numbers double as IRQ numbers, like AT91C_ID_* values */
+ #define PIO_NB_IO		32 /* Number of IO handled by one PIO controller */
+diff -Nur at91bootstrap-2.4-olimex/include/nandflash.h at91bootstrap-2.4-olimex-fastboot/include/nandflash.h
+--- at91bootstrap-2.4-olimex/include/nandflash.h	2009-05-27 23:33:43.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/include/nandflash.h	2012-06-15 22:19:15.736000197 +0200
+@@ -37,6 +37,17 @@
+ #ifndef _NANDFLASH_H
+ #define _NANDFLASH_H
+ 
++// EMWHBR: Redefined to shrink size of the final bin-file
++//typedef struct SNandInitInfo
++//{
++//	unsigned int uNandID		; /* Nand Chip ID */
++//	unsigned int uNandNbBlocks	;	
++//	unsigned int uNandBlockSize	;
++//	unsigned int uNandSectorSize	;
++//	unsigned int uNandSpareSize	;
++//	unsigned int uNandBusWidth	;
++//	char 	     name[40]		; /* Nand Name */
++//} SNandInitInfo, *PSNandInitInfo;
+ typedef struct SNandInitInfo
+ {
+ 	unsigned int uNandID		; /* Nand Chip ID */
+@@ -45,7 +56,6 @@
+ 	unsigned int uNandSectorSize	;
+ 	unsigned int uNandSpareSize	;
+ 	unsigned int uNandBusWidth	;
+-	char 	     name[40]		; /* Nand Name */
+ } SNandInitInfo, *PSNandInitInfo;
+ 
+ /* Group all usefull sizes for the nandflash chip */
+@@ -130,7 +140,10 @@
+ 
+ /* NandFlash functions */
+ extern void nandflash_hw_init(void);
+-extern void nandflash_cfg_16bits_dbw_init(void);
++
++// EMWHBR: NAND data bus width is 8 bits, removed to shrink size of the final bin-file
++//extern void nandflash_cfg_16bits_dbw_init(void);
++
+ extern int load_nandflash(unsigned int img_addr, unsigned int img_size, unsigned int img_dest);
+-extern BOOL AT91F_NandEraseBlock0(void);
++
+ #endif
+diff -Nur at91bootstrap-2.4-olimex/include/nand_ids.h at91bootstrap-2.4-olimex-fastboot/include/nand_ids.h
+--- at91bootstrap-2.4-olimex/include/nand_ids.h	2009-05-28 00:11:12.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/include/nand_ids.h	2012-06-15 22:19:15.736000197 +0200
+@@ -40,11 +40,18 @@
+ #include "../include/nandflash.h"
+ 
+ /* Supported NandFlash devices */
+-static struct SNandInitInfo NandFlash_InitInfo[] = {
+-	{0xecda, 0x800, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F2G08U0M 8bit 256Mb\0"},
+-	{0x2cca, 0x800, 0x20000, 0x800, 0x40, 0x1, "Micron MT29F2G16AAB 16bit 256Mb\0"},	
+-	{0xecdc, 0x1000, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F4G08U0M 8bit 256Mb\0"},
+-	{0,}
++// EMWHBR: Redefined to shrink size of the final bin-file
++//static struct SNandInitInfo NandFlash_InitInfo[] = {
++///* EMWHBR : Remove devices to shrink size of the final bin-file
++//	{0xecda, 0x800, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F2G08U0M 8bit 256Mb\0"},
++//	{0x2cca, 0x800, 0x20000, 0x800, 0x40, 0x1, "Micron MT29F2G16AAB 16bit 256Mb\0"},
++//*/
++//	{0xecdc, 0x1000, 0x20000, 0x800, 0x40, 0x0, "Samsung K9F4G08U0M 8bit 256Mb\0"},
++//	{0,}
++//};
++
++static struct SNandInitInfo NandFlash_InitInfo = {
++  0xecdc, 0x1000, 0x20000, 0x800, 0x40, 0x0 /* "Samsung K9F4G08U0M 8bit 256Mb\0" */
+ };
+ 
+ #endif
+diff -Nur at91bootstrap-2.4-olimex/include/part.h at91bootstrap-2.4-olimex-fastboot/include/part.h
+--- at91bootstrap-2.4-olimex/include/part.h	2009-05-28 00:12:56.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/include/part.h	2012-06-15 22:19:15.736000197 +0200
+@@ -47,6 +47,11 @@
+ #include "sam9_l9260.h"
+ #endif
+ 
++#ifdef SAM9_L9260_HBR
++#include "AT91SAM9260_inc.h"
++#include "sam9_l9260_hbr.h"
++#endif
++
+ #ifdef AT91SAM9261
+ #include "AT91SAM9261_inc.h"
+ #include "at91sam9261ek.h"
+diff -Nur at91bootstrap-2.4-olimex/main.c at91bootstrap-2.4-olimex-fastboot/main.c
+--- at91bootstrap-2.4-olimex/main.c	2009-05-27 23:33:44.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/main.c	2012-06-17 22:19:49.856000177 +0200
+@@ -37,9 +37,8 @@
+ #include "include/part.h"
+ #include "include/main.h"
+ #include "include/debug.h"
+-#include "include/dataflash.h"
+-#include "include/flash.h"
+ #include "include/nandflash.h"
++#include "include/gpio.h"
+ 
+ /*------------------------------------------------------------------------------*/
+ /* Function Name       : main							*/
+@@ -49,47 +48,82 @@
+ /*------------------------------------------------------------------------------*/
+ int main(void)
+ {
++  unsigned char boot_mode;
++  unsigned int img_addr, img_size, img_dest;
++  volatile unsigned int *p_kernel_params = (unsigned int *) KERNEL_PARAM_START_ADDR;
+ 
+ /* ================== 1st step: Hardware Initialization ================= */
++
+ 	/* Performs the hardware initialization */
+-#ifdef CFG_HW_INIT
+ 	hw_init();
+-#endif
+ 
+ /* ==================== 2nd step: Load from media ==================== */
+-	/* Load from Dataflash in RAM */
+-#ifdef CFG_DATAFLASH
+-	load_df(AT91C_SPI_PCS_DATAFLASH, IMG_ADDRESS, IMG_SIZE, JUMP_ADDR);
+-#endif
+-#ifdef CFG_FLASH
+-	load_flash(IMG_ADDRESS, IMG_SIZE, JUMP_ADDR);
+-	dbg_print(">Flash ready\r\n");
+-#endif
+-
+-	/* Load from Nandflash in RAM */
+-#ifdef CFG_NANDFLASH
+-	load_nandflash(IMG_ADDRESS, IMG_SIZE, JUMP_ADDR);
+-	dbg_print(">NANDflash ready\r\n");
+-#endif
+-
+-/* ==================== 3rd step:  Process the Image =================== */
+-	/* Uncompress the image */
+-#ifdef GUNZIP
+-	decompress_image((void *)IMG_ADDRESS, (void *)JUMP_ADDR, IMG_SIZE);
+-	/* NOT IMPLEMENTED YET */
+-	dbg_print(">Decompress ready\r\n");
+-#endif /* GUNZIP */
+-
+-/* ==================== 4th step: Start the application =================== */
+-	/* Set linux arguments */
+-#ifdef LINUX_ARG
+-	linux_arg(LINUX_ARG);	/* NOT IMPLEMENTED YET */
+-	dbg_print(">Linux ready\r\n");
+-#endif /* LINUX_ARG */
+-	dbg_print(">Start application at [");
+-	dbg_print_hex(JUMP_ADDR);
+-	dbg_print("]\r\n");
+-	{ volatile unsigned int loop; for(loop = 200000; loop > 0; loop--);}
++
++	/* Check if BUT is pressed */
++	if ( pio_get_value(AT91C_PIN_PC(15)) ) {
++	  /* Jump directly to kernel and bypass U-Boot */
++	  boot_mode = BOOT_MODE_KERNEL;
++	  img_addr  = IMG_ADDR_KERNEL;
++	  img_size  = IMG_SIZE_KERNEL;
++	  img_dest  = JUMP_ADDR_KERNEL - UBOOT_HEADER_SIZE;
++	}
++	else {
++	  /* U-Boot requested (BUT is pressed) */
++	  boot_mode = BOOT_MODE_UBOOT;
++	  img_addr  = IMG_ADDR_UBOOT;
++	  img_size  = IMG_SIZE_UBOOT;
++	  img_dest  = JUMP_ADDR_UBOOT;
++	}
++	
++	/* Load from Nandflash to SDRAM */
++	if ( load_nandflash(img_addr, img_size, img_dest) ) {
++	    goto load_failed;
++	}
++
++/* ==================== 3th step: Start the application =================== */	
++
+ 	/* Jump to the Image Address */
+-	return JUMP_ADDR;
++	if (boot_mode == BOOT_MODE_UBOOT) {
++	  dbg_print("U-Boot@[");
++	  dbg_print_hex(img_dest);
++	  dbg_print("]\r\n");
++
++	  /* Start U-Boot */
++	  return img_dest;
++	}
++	else {
++	  dbg_print("Kernel@[");
++	  dbg_print_hex(img_dest + UBOOT_HEADER_SIZE);
++	  dbg_print("]\r\n");
++
++	  /* Make sure any previous kernel parameter list,
++	   * passed by U-Boot is destroyed. This will force
++	   * kernel to use its built-in parameters. */
++
++	  /* Create an empty tagged list */
++	  *p_kernel_params++ = 0x2;
++	  *p_kernel_params++ = 0x54410001; /* ATAG_CORE */
++	  *p_kernel_params++ = 0x0;
++	  *p_kernel_params   = 0x0;        /* ATAG_NONE */
++	  
++	  /* Prepare jump to kernel startup entry point 
++	   * See kernel source arch/arm/kernel/head.S */
++	  asm volatile("mov    r0, #0");           /* r0 = 0             */
++	  asm volatile("ldr    r1, =1501");        /* r1 = machine nr    */
++	  asm volatile("ldr    r2, =0x20000000");  /* r2 = atags pointer */
++
++	  /* Start kernel, assumes parameters are compiled into kernel image */
++	  asm volatile("ldr    r3, =0x20008000");
++	  asm volatile("bx     r3");
++
++	  /* Start kernel, assumes parameters are compiled into kernel image */
++	  //return (img_dest + UBOOT_HEADER_SIZE);
++	}
++
++load_failed:
++	pio_set_value(AT91C_PIN_PA(9), 1); /* PWR_LED (yellow) On */
++	dbg_print("\r\nLoad error\r\n");
++	while(1) {
++	  ;
++	}
+ }
+diff -Nur at91bootstrap-2.4-olimex/Makefile at91bootstrap-2.4-olimex-fastboot/Makefile
+--- at91bootstrap-2.4-olimex/Makefile	2009-05-27 23:52:39.000000000 +0200
++++ at91bootstrap-2.4-olimex-fastboot/Makefile	2012-06-15 22:19:15.737000197 +0200
+@@ -6,7 +6,7 @@
+ OBJCOPY=$(CROSS_COMPILE)objcopy
+ OBJDUMP=$(CROSS_COMPILE)objdump
+ 
+-TOPDIR	:=	$(CURDIR)
++TOPDIR:=$(shell pwd)
+ 
+ VERSION:=2.4
+ 
+@@ -61,6 +61,7 @@
+ INCL=board/$(BOARD)/$(PROJECT)
+ 
+ CPPFLAGS=-g -mcpu=arm9 -Os -Wall -D$(TARGET)		\
++	-Wa,-adhls=$@.lst \
+ 	-I$(INCL) -Iinclude				\
+ 	-DTOP_OF_MEM=$(TOP_OF_MEMORY) 			\
+ 	-D$(SPI_MODE) -D$(SPI_BOOT) -DSPI_CLK=$(SPI_CLK) \
+@@ -88,6 +89,8 @@
+ 	mkdir -p result
+ 	echo $(CONFIG_DATAFLASH) $(COBJS-y)
+ 	$(LD) $(LDFLAGS) -n -o result/$(BOOT_NAME).elf $(OBJS)
++	$(OBJDUMP) -S result/$(BOOT_NAME).elf > result/$(BOOT_NAME).dis
++	find . -type f -name '*.lst' | xargs -I xxx cp xxx result/
+ 
+ binaries/$(BOOT_NAME).bin: result/$(BOOT_NAME).elf
+ 	mkdir -p binaries
+@@ -123,6 +126,26 @@
+ 	echo	SPI_BOOT=SPI_BOOT_CS1		>>	.config
+ 	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
+ 
++# DataFlash
++sam9_l9260_hbr_defconfig_df:	clean
++	echo	BOARDNAME=sam9_l9260_hbr	>	.config
++	echo	BOARD=sam9_l9260_hbr		>>	.config
++	echo	PROJECT=dataflash		>>	.config
++	echo	CONFIG_DATAFLASH=y		>>	.config
++	echo	SPI_MODE=$(CONFIG_SPI_MODE)	>>	.config
++	echo	SPI_BOOT=SPI_BOOT_CS1		>>	.config
++	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
++
++# NandFlash
++sam9_l9260_hbr_defconfig_nf:	clean
++	echo	BOARDNAME=sam9_l9260_hbr	>	.config
++	echo	BOARD=sam9_l9260_hbr		>>	.config
++	echo	PROJECT=nandflash		>>	.config
++	echo	CONFIG_NANDFLASH=y		>>	.config
++	echo	SPI_MODE=$(CONFIG_SPI_MODE)	>>	.config
++	echo	SPI_BOOT=SPI_BOOT_CS1		>>	.config
++	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
++
+ at91sam9260pf_defconfig:	clean
+ 	echo	BOARDNAME=at91sam9260pf		>	.config
+ 	echo	BOARD=at91sam9260ek		>>	.config
+@@ -159,19 +182,6 @@
+ 	echo	SPI_BOOT=SPI_BOOT_CS0		>>	.config
+ 	echo	SPI_CLK=$(CONFIG_SPI_CLK)	>>	.config
+ 
+-../buildroot:
+-	(cd .. ; svn co svn://uclibc.org/trunk/buildroot)
+-
+-../buildroot/.config:	../buildroot
+-	cp buildroot.config $@
+-	make -C ../buildroot menuconfig
+-
+-toolchain:	../buildroot/.config
+-	make -C ../buildroot
+-
+-#	echo $PCK 1  $(PCK) 2  ${PCK} 3 $$PCK 4  $$(PCK) 5  $${PCK}  )
+-	
+-#	cd .. ; tar -cvf `basename $$(TOPDIR)`.tar `basename $$(TOPDIR)` ; bzip2 `basename $$(TOPDIR)`.tar )
+ 
+ distrib:
+ 	find . -type f \( -name .depend \
+@@ -183,6 +193,7 @@
+ 		-o -name '*~' \) \
+ 		-print0 \
+ 		| xargs -0 rm -f
++	find . -type f -name '*.lst' | xargs rm -f
+ 	rm -fr binaries
+ 	rm -fr result
+ 
+@@ -195,6 +206,7 @@
+ 		-o -name '*~' \) \
+ 		-print0 \
+ 		| xargs -0 rm -f
++	find . -name '*.lst' | xargs rm -f
+ 	rm -fr result
+ 
+ tarball:	clean

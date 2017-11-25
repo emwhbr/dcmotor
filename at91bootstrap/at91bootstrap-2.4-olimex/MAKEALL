@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#make	toolchain
+source	gcc-4.1.2-uclibc-external.sh
+make	distrib
+make	MEMORY=dataflashcard	at91sam9260dfc_defconfig
+make
+make	MEMORY=dataflash	at91sam9260ek_defconfig
+make
+make	MEMORY=nandflash	at91sam9260ek_defconfig
+make
+make	MEMORY=flash		at91sam9260pf_defconfig
+make
+make	MEMORY=dataflash	at91sam9261ek_defconfig
+make
+make	MEMORY=nandflash	at91sam9261ek_defconfig
+make
+make	MEMORY=dataflash	at91sam9263ek_defconfig
+make
+make	clean
