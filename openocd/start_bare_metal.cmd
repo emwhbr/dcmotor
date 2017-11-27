@@ -22,7 +22,7 @@ echo ">>>> Reset and halt"
 init
 reset halt
 reset init
-rbp 0x200344
+rbp 0x2001d8
 halt
 
 # Enable fast memory access
@@ -39,7 +39,7 @@ load_image ../fw/sam9_l9260_hbr-nandflashboot-2.4.bin 0x200000 bin
 
 # Excecute AT91Bootstrap, stop before loading U-Boot from NandFlash
 echo ">>>> Starting bootstrap with breakpoint"
-bp 0x200344 4
+bp 0x2001d8 4
 resume 0x200000
 
 ######## Run the commands below manually - Doesn't work in script mode 
