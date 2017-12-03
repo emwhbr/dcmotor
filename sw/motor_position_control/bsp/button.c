@@ -76,7 +76,7 @@ void button_isr_pressed(void)
   /* clear this interrupt */
   /* done automatically when reading AIC_IVR (bsp_isr_irq) */
   
-  console_putln("BUTT");
+  console_putln("BUTT-ISR");
 
   ARM_INT_LOCK(int_lock_key);
   g_was_pressed = true;
