@@ -50,6 +50,8 @@ void encoder_initialize(void);
 
 int encoder_get_counter(void);
 
+void encoder_set_counter(int value);
+
 void encoder_gearbox_shaft(const int encoder_counter,
 			   bool *positive,
 			   int *revolution,

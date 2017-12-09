@@ -32,10 +32,11 @@ static enum mpc_fsm_state g_current_state = MPC_FSM_STATE_INIT;
 /****************************************************************************
  *               Function prototypes
  ****************************************************************************/
-static void execute_state_action(enum mpc_fsm_state state);
+static void execute_state_action(enum mpc_fsm_state state,
+				 enum mpc_fsm_event event);
 
 static void action_state_init(void);
-static void action_state_calib(void);
+static void action_state_calib(enum mpc_fsm_event event);
 static void action_state_pos(void);
 
 /****************************************************************************
@@ -82,7 +83,7 @@ void mpc_fsm_execute(enum mpc_fsm_event event)
   }
 
   /* execute state action */
-  execute_state_action(g_current_state);
+  execute_state_action(g_current_state, event);
 }
 
 /****************************************************************************
@@ -91,14 +92,15 @@ void mpc_fsm_execute(enum mpc_fsm_event event)
  
 /*****************************************************************/
 
-static void execute_state_action(enum mpc_fsm_state state)
+static void execute_state_action(enum mpc_fsm_state state,
+				 enum mpc_fsm_event event)
 {
   switch (state) {
   case MPC_FSM_STATE_INIT:
     action_state_init();
     break;
   case MPC_FSM_STATE_CALIB:
-    action_state_calib();
+    action_state_calib(event);
     break;
   case MPC_FSM_STATE_POS:
     action_state_pos();
@@ -120,7 +122,7 @@ static void action_state_init(void)
 
 /*****************************************************************/
 
-static void action_state_calib(void)
+static void action_state_calib(enum mpc_fsm_event event)
 {
   uint16_t shaft_position;
   const uint16_t max_shaft_position = motor_shaft_max_position();
@@ -132,6 +134,11 @@ static void action_state_calib(void)
 
   /* stop motor */
   motor_ctrl(true, 0);
+
+  /* set new origo */
+  if (event == MPC_FSM_EVENT_BUT_PRESSED) {
+    motor_zero_shaft_position();
+  }
 
   /* get shaft position */
   shaft_position = motor_get_shaft_position();

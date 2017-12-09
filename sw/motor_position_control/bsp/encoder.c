@@ -89,6 +89,17 @@ int encoder_get_counter(void)
 
 /*****************************************************************/
 
+void encoder_set_counter(int value)
+{
+  ARM_INT_KEY_TYPE int_lock_key;  
+
+  ARM_INT_LOCK(int_lock_key);
+  g_encoder_cnt_abs = value;
+  ARM_INT_UNLOCK(int_lock_key);
+}
+
+/*****************************************************************/
+
 void encoder_gearbox_shaft(const int encoder_counter,
 			   bool *positive,
 			   int *revolution,

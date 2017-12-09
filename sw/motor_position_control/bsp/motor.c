@@ -64,6 +64,13 @@ void motor_ctrl(bool clockwise,
 
 /*****************************************************************/
 
+void motor_zero_shaft_position(void)
+{
+  encoder_set_counter(0);
+}
+
+/*****************************************************************/
+
 uint16_t motor_get_shaft_position(void)
 {
   return encoder_get_gearbox_shaft_position();
