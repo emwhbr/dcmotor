@@ -9,15 +9,29 @@
  *                                                                      *
  ************************************************************************/
 
-#ifndef __MPC_PRODUCT_INFO_H__
-#define __MPC_PRODUCT_INFO_H__
+#ifndef __MPC_CORE_H__
+#define __MPC_CORE_H__
+
+#include <stdbool.h>
 
 /****************************************************************************
- *
- * Product information
- *
+ *               Types and definitions
  ****************************************************************************/
-#define MPC_PRODUCT_NUMBER "Motor Position Control"
-#define MPC_RSTATE         "R1A04"
 
-#endif // __MPC_PRODUCT_INFO_H__
+/****************************************************************************
+ *               Exported functions
+ ****************************************************************************/
+
+void mpc_core_initialize(void);
+
+void mpc_core_calibrate(bool zero_shaft);
+
+void mpc_core_position(void);
+
+/*
+ * This is the actual PID controller.
+ * Executed as a callback to TC0 at 100Hz (T=10ms).
+ */
+void mpc_core_tc0_callback(void);
+
+#endif /* __MPC_CORE_H_*/

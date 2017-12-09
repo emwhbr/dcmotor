@@ -22,6 +22,7 @@ PROC_DIR = ../proc
 # ------ Files
 
 OBJS = $(OBJ_DIR)/main.o \
+       $(OBJ_DIR)/mpc_core.o \
        $(OBJ_DIR)/mpc_fsm.o \
        $(OBJ_DIR)/pid_ctrl.o \
        $(OBJ_DIR)/util.o

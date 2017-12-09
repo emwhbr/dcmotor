@@ -17,6 +17,7 @@
 #include "util.h"
 #include "mpc_product_info.h"
 #include "mpc_fsm.h"
+#include "mpc_core.h"
 
 /****************************************************************************
  *               Types and definitions
@@ -31,7 +32,6 @@
  *               Function prototypes
  ****************************************************************************/
 static enum mpc_fsm_event check_user_button(void);
-static void test_tc0_callback(void);
 static void delay(void);
 
 /*****************************************************************/
@@ -43,7 +43,7 @@ void c_main()  /* main() */
   char hexstr[20];
 
   /* initialize BSP */
-  bsp_high_level_init(test_tc0_callback);
+  bsp_high_level_init(mpc_core_tc0_callback);
 
   console_put("\n");
   console_put(MPC_PRODUCT_NUMBER);
@@ -85,19 +85,6 @@ static enum mpc_fsm_event check_user_button(void)
   }
   else {
     return MPC_FSM_EVENT_NONE;
-  }
-}
-
-/*****************************************************************/
-
-static void test_tc0_callback(void)
-{
-  static uint16_t cnt = 0;
-
-  // this should happen at 0.5Hz, TC0 frequency is 100Hz (T=10ms)
-  if (++cnt >= 200) {
-    console_putln("TC0-CBF");
-    cnt = 0;
   }
 }
 
