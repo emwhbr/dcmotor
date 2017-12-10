@@ -32,15 +32,13 @@
  *               Function prototypes
  ****************************************************************************/
 static enum mpc_fsm_event check_user_button(void);
-static void delay(void);
+static void delay_10x_ms(uint8_t x);
 
 /*****************************************************************/
 
 void c_main()  /* main() */
 {
-  uint16_t counter = 0;
   enum mpc_fsm_event event = MPC_FSM_EVENT_NONE;
-  char hexstr[20];
 
   /* initialize BSP */
   bsp_high_level_init(mpc_core_tc0_callback);
@@ -54,17 +52,12 @@ void c_main()  /* main() */
    * execute state machine
    */
   while (1) {
-    /* update local counter */
-    u16_hexstr(hexstr, counter++);
-    console_put("MAIN: cnt :"); console_putln(hexstr);
-
-    /* state machine */
+    /* update state machine */
     event = check_user_button();;
     mpc_fsm_execute(event);    
 
-    /* take it easy */
-    delay();
-    delay();    
+    /* take it easy, 100ms */    
+    delay_10x_ms(10);
   }
 }
 
@@ -90,8 +83,10 @@ static enum mpc_fsm_event check_user_button(void)
 
 /*****************************************************************/
 
-static void delay(void)
+static void delay_10x_ms(uint8_t x)
 {
+  const int n = x * 17857; /* 10ms = 17857 */
   int i, j;
-  for(i = 0; i < 369000; i++) j += i;
+
+  for(i = 0; i < n; i++) j += i;
 }

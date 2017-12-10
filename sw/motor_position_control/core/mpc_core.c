@@ -20,7 +20,10 @@
  *               Types and definitions
  ****************************************************************************/
 /* ADC=0-1023 ==> PWM=0-65535 */
-#define ADC_DUTY_FACTOR  64
+#define ADC_DUTY_FACTOR  (64)
+
+/* ADC=0-1023 ==> SHAFT=0-max */
+#define ADC_POS_FACTOR ((float)motor_shaft_max_position() / 1023)
 
 /* PID parameters */
 #define P_GAIN  (100.0)
@@ -75,11 +78,7 @@ void mpc_core_calibrate(bool zero_shaft)
 {
   uint16_t shaft_position;
   const uint16_t max_shaft_position = motor_shaft_max_position();
-
   float command_pos;
-  const float adc_pos_factor = 
-    (float)motor_shaft_max_position() / 1023;
-
   char hexstr[20];
 
   /* disable PID controller */
@@ -102,7 +101,7 @@ void mpc_core_calibrate(bool zero_shaft)
   console_put(" / "); console_putln(hexstr);
 
   /* update PID set-point */
-  command_pos = adc_get_value() * adc_pos_factor;
+  command_pos = adc_get_value() * ADC_POS_FACTOR;
   pid_ctrl_set_command_position(&g_pid,
 				command_pos);
 
@@ -114,7 +113,19 @@ void mpc_core_calibrate(bool zero_shaft)
 
 void mpc_core_position(void)
 {
+  float command_pos;
+  char hexstr[20];
+
+  /* enable PID controller */
   g_pid_enable = true;
+
+  /* update PID set-point */
+  command_pos = adc_get_value() * ADC_POS_FACTOR;
+  pid_ctrl_set_command_position(&g_pid,
+				command_pos);
+
+  u16_hexstr(hexstr, (uint16_t)command_pos);
+  console_put("POS: s-pos:"); console_putln(hexstr);
 }
 
 /*****************************************************************/
