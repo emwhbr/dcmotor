@@ -52,10 +52,10 @@ void motor_ctrl(bool clockwise,
 {
   /* set motor direction */
   if (clockwise) {
-    AT91C_BASE_PIOB->PIO_CODR = MOTOR_PIN_DIR;
+    AT91C_BASE_PIOB->PIO_SODR = MOTOR_PIN_DIR;
   }
   else {
-    AT91C_BASE_PIOB->PIO_SODR = MOTOR_PIN_DIR;
+    AT91C_BASE_PIOB->PIO_CODR = MOTOR_PIN_DIR;
   }
 
   /* set motor speed */

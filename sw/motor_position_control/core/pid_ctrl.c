@@ -105,7 +105,7 @@ float pid_ctrl_update(struct pid_ctrl *pid,
   pid->m_d_state = position;
 
   /* limit output */
-  output =  p_term + d_term + i_term;
+  output = p_term + d_term + i_term;
   if (output > pid->m_output_max) {
     output = pid->m_output_max;
   }

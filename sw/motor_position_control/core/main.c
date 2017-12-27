@@ -54,7 +54,7 @@ void c_main()  /* main() */
   while (1) {
     /* update state machine */
     event = check_user_button();;
-    mpc_fsm_execute(event);    
+    mpc_fsm_execute(event);
 
     /* take it easy, 100ms */    
     delay_10x_ms(10);
