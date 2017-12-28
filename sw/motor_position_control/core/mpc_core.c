@@ -33,8 +33,8 @@
 
 //#define DUTY_MIN  (-65000.0)
 //#define DUTY_MAX  (65000.0)
-#define DUTY_MIN  (-16000.0)
-#define DUTY_MAX  ( 16000.0)
+#define DUTY_MIN  (-32000.0)
+#define DUTY_MAX  ( 32000.0)
 
 /* motor control state definitions */
 enum motor_ctrl_state {
@@ -44,24 +44,38 @@ enum motor_ctrl_state {
   MOTOR_CTRL_STATE_STOP
 };
 
-/* forced number of times in stop-state,
- * absolute time = N x 10ms = 500ms
+/* forced number of times in stop-state
+ * to avoid fast changes of motor direction,
+ * absolute time = N x 10ms = 200ms
  */
-#define MOTOR_STOP_CNT_MAX  (50)
+#define MOTOR_STOP_CNT_MAX  (20)
+
+/* moving average for commanded position,
+ * absolute time = N x 10ms = 50ms
+ */
+#define COMMAND_POS_WINDOW_SIZE  (5)
 
 /****************************************************************************
  *               Global variables
  ****************************************************************************/
 static struct pid_ctrl g_pid;
-
 static bool g_pid_enable = false;
 
 static enum motor_ctrl_state g_current_motor_ctrl_state = MOTOR_CTRL_STATE_RESET;
 static uint16_t g_motor_stop_cnt = 0;
 
+static float g_command_pos_window[COMMAND_POS_WINDOW_SIZE] = {0.0,
+							      0.0,
+							      0.0,
+							      0.0,
+							      0.0};
+static int g_command_pos_idx = 0;
+
 /****************************************************************************
  *               Function prototypes
  ****************************************************************************/
+float get_command_pos_moving_average(void);
+
 void motor_ctrl_state(float pid_output,
 		      bool *motor_clockwise,
 		      uint16_t *motor_duty);
@@ -123,7 +137,7 @@ void mpc_core_calibrate(bool zero_shaft)
   console_put(" / "); console_putln(hexstr);
 
   /* update PID set-point */
-  command_pos = adc_get_value() * ADC_POS_FACTOR;
+  command_pos = get_command_pos_moving_average();
   pid_ctrl_set_command_position(&g_pid,
 				command_pos);
 
@@ -142,7 +156,7 @@ void mpc_core_position(void)
   g_pid_enable = true;
 
   /* update PID set-point */
-  command_pos = adc_get_value() * ADC_POS_FACTOR;
+  command_pos = get_command_pos_moving_average();
   pid_ctrl_set_command_position(&g_pid,
 				command_pos);
 
@@ -192,7 +206,29 @@ void mpc_core_tc0_callback(void)
 /****************************************************************************
  *               Private functions
  ****************************************************************************/
- 
+
+ /*****************************************************************/
+
+float get_command_pos_moving_average(void)
+{
+  int i;
+  float command_pos;
+  float avg = 0.0;
+
+  command_pos = adc_get_value() * ADC_POS_FACTOR;
+
+  g_command_pos_window[g_command_pos_idx++] = command_pos;
+  if (g_command_pos_idx >= COMMAND_POS_WINDOW_SIZE) {
+    g_command_pos_idx = 0;
+  }
+
+  for (i=0; i < COMMAND_POS_WINDOW_SIZE; i++) {
+    avg += g_command_pos_window[i];
+  }
+
+  return (avg / COMMAND_POS_WINDOW_SIZE);
+}
+
 /*****************************************************************/
 
 void motor_ctrl_state(float pid_output,
@@ -216,9 +252,11 @@ void motor_ctrl_state(float pid_output,
   case MOTOR_CTRL_STATE_RESET:
     if (*motor_clockwise) {
       next_state = MOTOR_CTRL_STATE_CLOCKWISE;
+      console_putln("CW");
     }
     else {
       next_state = MOTOR_CTRL_STATE_ANTICLOCKWISE;
+      console_putln("ACW");
     }
     break;
   case MOTOR_CTRL_STATE_CLOCKWISE:
