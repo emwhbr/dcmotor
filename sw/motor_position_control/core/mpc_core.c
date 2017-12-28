@@ -27,14 +27,12 @@
 #define ADC_POS_FACTOR ((float)motor_shaft_max_position() / 1023)
 
 /* PID parameters */
-#define P_GAIN  (150.0)
+#define P_GAIN  (250.0)
 #define I_GAIN  (0.0)
-#define D_GAIN  (0.0)
+#define D_GAIN  (700.0)
 
-//#define DUTY_MIN  (-65000.0)
-//#define DUTY_MAX  (65000.0)
-#define DUTY_MIN  (-32000.0)
-#define DUTY_MAX  ( 32000.0)
+#define DUTY_MIN  (-65000.0)
+#define DUTY_MAX  ( 65000.0)
 
 /* motor control state definitions */
 enum motor_ctrl_state {
@@ -46,9 +44,9 @@ enum motor_ctrl_state {
 
 /* forced number of times in stop-state
  * to avoid fast changes of motor direction,
- * absolute time = N x 10ms = 200ms
+ * absolute time = N x 10ms = 150ms
  */
-#define MOTOR_STOP_CNT_MAX  (20)
+#define MOTOR_STOP_CNT_MAX  (15)
 
 /* moving average for commanded position,
  * absolute time = N x 10ms = 50ms
@@ -136,6 +134,16 @@ void mpc_core_calibrate(bool zero_shaft)
   u16_hexstr(hexstr, max_shaft_position);
   console_put(" / "); console_putln(hexstr);
 
+  /* re-initialize PID controller */
+  pid_ctrl_set_gain(&g_pid,
+		    P_GAIN,
+		    I_GAIN,
+		    D_GAIN);
+
+  pid_ctrl_set_output_limits(&g_pid,
+			     DUTY_MIN,
+			     DUTY_MAX);
+
   /* update PID set-point */
   command_pos = get_command_pos_moving_average();
   pid_ctrl_set_command_position(&g_pid,
@@ -149,19 +157,10 @@ void mpc_core_calibrate(bool zero_shaft)
 
 void mpc_core_position(void)
 {
-  float command_pos;
-  char hexstr[20];
-
   /* enable PID controller */
   g_pid_enable = true;
 
-  /* update PID set-point */
-  command_pos = get_command_pos_moving_average();
-  pid_ctrl_set_command_position(&g_pid,
-				command_pos);
-
-  u16_hexstr(hexstr, (uint16_t)command_pos);
-  console_put("POS: s-pos:"); console_putln(hexstr);
+  console_putln("POS: on");
 }
 
 /*****************************************************************/
@@ -172,8 +171,9 @@ void mpc_core_tc0_callback(void)
   float pid_output;
 
   bool motor_clockwise;
-  uint16_t motor_duty;  
+  uint16_t motor_duty;
 
+  static int dbg_cnt = 0;
   char hexstr[20];
 
   /* check if PID controller is enabled */
@@ -201,6 +201,19 @@ void mpc_core_tc0_callback(void)
 
   /* apply new output */
   motor_ctrl(motor_clockwise, motor_duty);
+
+  /* DEBUG: every 50ms */
+  if (++dbg_cnt == 5) {
+    if (motor_clockwise) {
+      u16_hexstr(hexstr, (uint16_t)pid_output);
+      console_put("TC0: pid:+"); console_putln(hexstr);
+    }
+    else {
+      u16_hexstr(hexstr, (uint16_t)(pid_output * -1.0));
+      console_put("TC0: pid:-"); console_putln(hexstr);
+    }
+    dbg_cnt = 0;
+  }
 }
 
 /****************************************************************************
