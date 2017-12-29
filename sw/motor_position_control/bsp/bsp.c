@@ -334,13 +334,8 @@ static void bsp_isr_tc0(void)
   /* clear this interrupt */
   uint32_t volatile dummy =  AT91C_BASE_TC0->TC_SR;
 
-  dbg_pin_on(DBG_PIN_1); // TBD: playing with TC0
-
   // execute callback function (if any)
   if (g_tc0_callback) {
     (*g_tc0_callback)();
   }
-
-  dbg_pin_off(DBG_PIN_1);  // TBD: playing with TC0
-
 }

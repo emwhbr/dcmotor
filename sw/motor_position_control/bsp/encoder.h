@@ -43,8 +43,8 @@
 				 */
 
 /* encoder output pins, A & B */
-#define ENCODER_PIN_ENCA  AT91C_PIO_PB4
-#define ENCODER_PIN_ENCB  AT91C_PIO_PB5
+#define ENCODER_PIN_ENCA  AT91C_PIO_PB4 /* external connector pin13 */
+#define ENCODER_PIN_ENCB  AT91C_PIO_PB5 /* external connector pin15 */
 
 void encoder_initialize(void);
 

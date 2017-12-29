@@ -18,7 +18,7 @@
 #include "sam9l9260.h"
 
 /* motor direction control pin */
-#define MOTOR_PIN_DIR  AT91C_PIO_PB1
+#define MOTOR_PIN_DIR  AT91C_PIO_PB1 /* external connector pin7 */
 
 void motor_initialize();
 

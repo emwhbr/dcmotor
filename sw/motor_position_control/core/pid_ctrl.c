@@ -30,14 +30,16 @@
 
 /*****************************************************************/
 
-void pid_ctrl_set_gain(struct pid_ctrl *pid,
-		       float p_gain,
-		       float i_gain,
-		       float d_gain)
+void pid_ctrl_initialize(struct pid_ctrl *pid,
+			 float p_gain,
+			 float i_gain,
+			 float d_gain)
 {
   /* default output range: 0 - 100 */
   pid_ctrl_set_command_position(pid, 0.0);
   pid_ctrl_set_output_limits(pid, 0.0, 100.0);
+
+  pid->m_pos_error = 0.0;
   
   pid->m_output = pid->m_output_min;
 
@@ -76,8 +78,6 @@ void pid_ctrl_set_command_position(struct pid_ctrl *pid,
 float pid_ctrl_update(struct pid_ctrl *pid,
 		      float position)
 {
-  float pos_error;
-
   float p_term;
   float i_term;
   float d_term;
@@ -85,13 +85,13 @@ float pid_ctrl_update(struct pid_ctrl *pid,
   float output;
 
   /* calculate error */
-  pos_error = pid->m_command_position - position;
+  pid->m_pos_error = pid->m_command_position - position;
 
   /* calculate PROPORTIONAL term */
-  p_term = pid->m_p_gain * pos_error;
+  p_term = pid->m_p_gain * pid->m_pos_error;
 
   /* Calculate INTEGRAL term */
-  pid->m_i_state += pos_error;
+  pid->m_i_state += pid->m_pos_error;
   if (pid->m_i_state > pid->m_i_max) {
     pid->m_i_state = pid->m_i_max;
   }

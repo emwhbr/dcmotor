@@ -20,6 +20,9 @@ struct pid_ctrl {
   /* set-point */
   float m_command_position;
 
+  /* error */
+  float m_pos_error;
+
   /* output */  
   float m_output;
   float m_output_min;
@@ -43,10 +46,10 @@ struct pid_ctrl {
  *               Exported functions
  ****************************************************************************/
 /* define PID parameters */
-void pid_ctrl_set_gain(struct pid_ctrl *pid,
-		       float p_gain,
-		       float i_gain,
-		       float d_gain);
+void pid_ctrl_initialize(struct pid_ctrl *pid,
+			 float p_gain,
+			 float i_gain,
+			 float d_gain);
 
 /* output limits */
 void pid_ctrl_set_output_limits(struct pid_ctrl *pid,

@@ -18,6 +18,6 @@
  *
  ****************************************************************************/
 #define MPC_PRODUCT_NUMBER "Motor Position Control"
-#define MPC_RSTATE         "R1A08"
+#define MPC_RSTATE         "R1A09"
 
 #endif // __MPC_PRODUCT_INFO_H__

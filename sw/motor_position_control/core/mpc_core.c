@@ -93,10 +93,10 @@ void mpc_core_initialize(void)
   motor_ctrl(true, 0);
 
   /* intialize PID controller */
-  pid_ctrl_set_gain(&g_pid,
-		    P_GAIN,
-		    I_GAIN,
-		    D_GAIN);
+  pid_ctrl_initialize(&g_pid,
+		      P_GAIN,
+		      I_GAIN,
+		      D_GAIN);
 
   pid_ctrl_set_output_limits(&g_pid,
 			     DUTY_MIN,
@@ -135,10 +135,10 @@ void mpc_core_calibrate(bool zero_shaft)
   console_put(" / "); console_putln(hexstr);
 
   /* re-initialize PID controller */
-  pid_ctrl_set_gain(&g_pid,
-		    P_GAIN,
-		    I_GAIN,
-		    D_GAIN);
+  pid_ctrl_initialize(&g_pid,
+		      P_GAIN,
+		      I_GAIN,
+		      D_GAIN);
 
   pid_ctrl_set_output_limits(&g_pid,
 			     DUTY_MIN,
@@ -151,6 +151,10 @@ void mpc_core_calibrate(bool zero_shaft)
 
   u16_hexstr(hexstr, (uint16_t)command_pos);
   console_put("CALIB: s-pos:"); console_putln(hexstr);
+
+  /* DEBUG: clear all */
+  dbg_pin_off(DBG_PIN_1);
+  dbg_pin_off(DBG_PIN_2);
 }
 
 /*****************************************************************/
@@ -173,15 +177,25 @@ void mpc_core_tc0_callback(void)
   bool motor_clockwise;
   uint16_t motor_duty;
 
+  static bool dbg_first = true;
   static int dbg_cnt = 0;
+  float dbg_pos_error;
   char hexstr[20];
 
   /* check if PID controller is enabled */
   if (!g_pid_enable) {
     g_current_motor_ctrl_state = MOTOR_CTRL_STATE_RESET;
     g_motor_stop_cnt = 0;
+    dbg_first = true;
     return;
-  } 
+  }
+
+  /* DEBUG: create pulse first time */
+  if (dbg_first) {
+    dbg_first = false;
+     dbg_pin_on(DBG_PIN_1);
+     dbg_pin_off(DBG_PIN_1);
+  }
   
   /* ---------------------------------
    * PID controller loop
@@ -201,6 +215,18 @@ void mpc_core_tc0_callback(void)
 
   /* apply new output */
   motor_ctrl(motor_clockwise, motor_duty);
+
+  /* DEBUG: every cycle */
+  dbg_pos_error = g_pid.m_pos_error;
+  if (dbg_pos_error < 0.0) {
+    dbg_pos_error *= -1.0;
+  }
+  if (dbg_pos_error < 25) {
+    dbg_pin_on(DBG_PIN_1); /* within +- 25 points, +-1.5% */
+  }
+  else {
+    dbg_pin_off(DBG_PIN_1);
+  }
 
   /* DEBUG: every 50ms */
   if (++dbg_cnt == 5) {
