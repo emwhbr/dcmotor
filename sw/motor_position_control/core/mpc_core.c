@@ -27,9 +27,9 @@
 #define ADC_POS_FACTOR ((float)motor_shaft_max_position() / 1023)
 
 /* PID parameters */
-#define P_GAIN  (250.0)
+#define P_GAIN  (300.0)
 #define I_GAIN  (0.0)
-#define D_GAIN  (700.0)
+#define D_GAIN  (1650.0)
 
 #define DUTY_MIN  (-65000.0)
 #define DUTY_MAX  ( 65000.0)
@@ -44,14 +44,14 @@ enum motor_ctrl_state {
 
 /* forced number of times in stop-state
  * to avoid fast changes of motor direction,
- * absolute time = N x 10ms = 150ms
+ * absolute time = N x 5ms = 150ms
  */
-#define MOTOR_STOP_CNT_MAX  (15)
+#define MOTOR_STOP_CNT_MAX  (30)
 
 /* moving average for commanded position,
- * absolute time = N x 10ms = 50ms
+ * absolute time = N x 5ms = 50ms
  */
-#define COMMAND_POS_WINDOW_SIZE  (5)
+#define COMMAND_POS_WINDOW_SIZE  (10)
 
 /****************************************************************************
  *               Global variables
@@ -229,7 +229,7 @@ void mpc_core_tc0_callback(void)
   }
 
   /* DEBUG: every 50ms */
-  if (++dbg_cnt == 5) {
+  if (++dbg_cnt == 10) {
     if (motor_clockwise) {
       u16_hexstr(hexstr, (uint16_t)pid_output);
       console_put("TC0: pid:+"); console_putln(hexstr);

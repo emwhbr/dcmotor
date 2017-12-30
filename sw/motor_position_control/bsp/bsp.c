@@ -196,7 +196,7 @@ void bsp_isr_abort(char const *msg)
 static void bsp_tc_initialize(void)
 {
   /*
-   * setup Timer Counter 0 (TC0), F=100Hz, T=10ms
+   * setup Timer Counter 0 (TC0), F=200Hz, T=5ms
    */
   AT91C_BASE_PMC->PMC_PCER = 1 << AT91C_ID_TC0;  /* enable peripheral clock for timer/counter 0 */
 
@@ -209,7 +209,7 @@ static void bsp_tc_initialize(void)
 
   /* assumes MCK=102.4MHz, clock selected = MCK/128=0.8MHz (T=1.25us)
    * max range = 65535 x 1.25 = 81.9ms */
-  AT91C_BASE_TC0->TC_RC = 0x1f40; /* 8000 (T=1.25us x 8000 = 10ms, F=100Hz) */
+  AT91C_BASE_TC0->TC_RC = 0x0fa0; /* 4000 (T=1.25us x 4000 = 5ms, F=200Hz) */
 
   AT91C_BASE_TC0->TC_CCR = AT91C_TC_CLKEN; /* enable counter clock */
 }
