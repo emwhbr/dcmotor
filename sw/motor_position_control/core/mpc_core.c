@@ -66,6 +66,11 @@ static float g_command_pos_window[COMMAND_POS_WINDOW_SIZE] = {0.0,
 							      0.0,
 							      0.0,
 							      0.0,
+							      0.0,
+							      0.0,
+							      0.0,
+							      0.0,
+							      0.0,
 							      0.0};
 static int g_command_pos_idx = 0;
 
